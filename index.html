@@ -149,9 +149,15 @@ svg.puz{width:100%;height:auto;user-select:none;-webkit-user-select:none}
 .puz .fig-student{fill:none;stroke:var(--sky);stroke-width:3;stroke-linejoin:round;stroke-linecap:round}
 .puz .fig-fold{fill:rgba(123,97,201,.12);stroke:var(--violet);stroke-width:3;stroke-linejoin:round;stroke-dasharray:7 4}
 .puz .vtx-fold{fill:var(--violet);opacity:.8}
-.puz .pair-line{stroke:var(--amber);stroke-width:2.5;stroke-dasharray:5 4}
-.puz .pair-line-ok{stroke:var(--teal);stroke-width:2.5;stroke-dasharray:5 4}
+.puz .pair-line{stroke:var(--amber);stroke-width:2;stroke-dasharray:1 5;stroke-linecap:round}
+.puz .pair-line-ok{stroke:#8fa0bf;stroke-width:2;stroke-dasharray:1 5;stroke-linecap:round}
 .puz .mark-pick{fill:var(--sky);stroke:#1f5c94;stroke-width:2}
+.puz .mark-node{fill:#fff;stroke:var(--sky);stroke-width:3}
+.puz .mark-sel{fill:var(--amber);stroke:#b47d00;stroke-width:3}
+.puz .edge-draw{stroke:var(--sky);stroke-width:4;stroke-linecap:round}
+.puz .edge-ok{stroke:var(--teal);stroke-width:4;stroke-linecap:round}
+.puz .edge-bad{stroke:var(--coral);stroke-width:4;stroke-linecap:round}
+.puz .edge-miss{stroke:var(--teal);stroke-width:3.5;stroke-dasharray:9 6}
 .puz .print-bg{fill:#fff}
 .puz .print-gridline{stroke:#9a9a9a;stroke-width:1}
 .puz .print-dot{fill:#555}
@@ -354,7 +360,7 @@ svg.puz{width:100%;height:auto;user-select:none;-webkit-user-select:none}
 
   <div class="card" id="gDiffPanel">
     <p class="prompt" id="gDiffPrompt">選擇你的挑戰難度</p>
-    <p class="muted mt8">每個難度要完成 3 個圖形。每個圖形先找出「對稱軸」，再依序點出「所有對稱點」，點的時候會自動連出對稱點連線和圖形的另一半。送出檢查後，系統會自動對折給你看。</p>
+    <p class="muted mt8">每個難度要完成 3 個圖形。每個圖形先找出「對稱軸」，再點出「所有對稱點」，最後自己把點連起來，畫出圖形的另一半。送出檢查後，系統會自動對折給你看。</p>
     <div class="diffs">
       <button class="diff" onclick="gChooseDiff('low')"><b>🌱 低</b><span>7×7・對稱軸直立・3 個對稱點</span></button>
       <button class="diff" onclick="gChooseDiff('mid')"><b>🌿 中</b><span>9×9・對稱軸直立或橫躺・4 個對稱點</span></button>
@@ -522,8 +528,9 @@ svg.puz{width:100%;height:auto;user-select:none;-webkit-user-select:none}
    設定
    ============================================================ */
 const GAS_URL = 'https://script.google.com/macros/s/AKfycby8du8l-6NHXdkDWg35NXLjtMaiC8Gyn7IooF-7enm9t4Bs8zWqyZOiFJlvm1EsQLInYQ/exec';
-const APP_VERSION = 'v1.2';
+const APP_VERSION = 'v1.3';
 const CHANGELOG = [
+  { version: 'v1.3', date: '2026-09-22', desc: '第二關對稱點改以「對折後兩點是否疊在一起」判定：容許誤差以螢幕約 16px 計算、兩點須在對稱軸兩側且不可太靠近對稱軸，對折後畫出容許範圍圈與紅色差距線；垂直標準收緊為 85°～90° 並顯示實際夾角。第三、四關改為先點出所有對稱點，再由學生自己選兩點連線畫出另一半，送出後對折檢查對稱點與連線，漏連（綠色虛線）與多連（紅色）分別標示。' },
   { version: 'v1.2', date: '2026-09-22', desc: '關卡改為四關：第一關照片只畫對稱軸，送出後自動對折並計算左右重疊程度；第二關延續第一關照片標 2 組對稱點，判斷連線是否垂直對稱軸並自動對折看點是否重疊；第三關（原第二關）方格圖改為依序點出所有對稱點，自動連出對稱點連線與另一半，送出後自動對折；第四關為點陣版本。照片關卡改為大圖置中、檢查區在下方。' },
   { version: 'v1.1', date: '2026-09-21', desc: '填入正式 GAS Web App 網址；教師後台照片牆新增「照片資料夾狀態」檢查（資料夾是否存在、名稱、檔案數、分享設定、開啟連結）；前後端版本不一致時在頂部橫幅提醒重新部署。' },
   { version: 'v1.0', date: '2026-09-21', desc: '初版：PTC 帳號登入（必須 ptc 開頭＋數字流水號）與進度保存；三關闖關（實境照片檢驗、方格宇宙、點陣星空）；教師後台三檢視（表格／清單／圖卡）、錯題紀錄、紙本學習單產生器（隨機／學生錯題／勾選錯題，附解答頁）、第一關照片牆；學生資料 API 需教師密碼。' }
@@ -789,8 +796,8 @@ function buildSVG(pz, opts) {
   }
   (opts.marks || []).forEach(m => {
     const q = P(m.p);
-    if (m.cls === 'mark-expect') svg.appendChild(svgEl('circle', { cx: q.X, cy: q.Y, r: 11, class: m.cls }));
-    else svg.appendChild(svgEl('circle', { cx: q.X, cy: q.Y, r: 9, class: m.cls }));
+    if (m.cls === 'mark-expect') svg.appendChild(svgEl('circle', { cx: q.X, cy: q.Y, r: 11, class: m.cls, 'pointer-events': 'none' }));
+    else svg.appendChild(svgEl('circle', { cx: q.X, cy: q.Y, r: 9, class: m.cls, 'pointer-events': 'none' }));
     if (m.label) {
       const dx = m.p.x > N / 2 ? 12 : -12, anchor = m.p.x > N / 2 ? 'start' : 'end';
       const txt = svgEl('text', { x: q.X + dx, y: q.Y - 10, class: opts.print ? 'print-lbl' : 'lbl', 'text-anchor': anchor });
@@ -920,6 +927,8 @@ const S1_PASS = 50;              // 第一關通過門檻：重疊程度 %
 const S1_MIN_COVER = 0.3;        // 對折後至少要比對到 30% 的畫面，避免對稱軸貼著邊
 const S1_MAX_TRIES = 3;          // 失敗 3 次後可先進下一關，標記「待老師確認」
 const S2_PAIRS = 2;              // 第二關要標的對稱點組數
+const S2_TOL_CSS = 16;           // 第二關對折重疊容許誤差：螢幕上約 16px（一個指尖），不受照片解析度影響
+const S2_PERP_DEG = 5;           // 連線和對稱軸夾角 85°～90° 才算垂直
 const P_COLORS = ['#f2b632', '#17a589', '#e35d5b', '#3b82c4'];
 
 const photo = { stage: 1, img: null, w: 0, h: 0, axis: [], axisLocked: false, pairs: [], pending: null,
@@ -1091,6 +1100,15 @@ function pDraw() {
       ctx.fillText(LABELS[i] + (k ? '′' : ''), p.x, p.y);
     });
     if (res && photo.fold >= 1) {
+      // 不動那一邊的點畫出容許範圍圈；沒疊上時畫出差距線
+      const still = pSide(pr[0], g) >= 0 ? a : b, moved = still === a ? b : a, tol = pTol();
+      ctx.beginPath(); ctx.arc(still.x, still.y, tol, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(20,28,48,.75)'; ctx.lineWidth = 4 * sc; ctx.stroke();          // 深色底，淺色照片也看得到
+      ctx.strokeStyle = res.ok ? '#17a589' : '#ffffff'; ctx.lineWidth = 2 * sc; ctx.setLineDash([4 * sc, 4 * sc]); ctx.stroke(); ctx.setLineDash([]);
+      if (!res.overlap && res.opposite) {
+        ctx.strokeStyle = '#e35d5b'; ctx.lineWidth = 3 * sc;
+        ctx.beginPath(); ctx.moveTo(still.x, still.y); ctx.lineTo(moved.x, moved.y); ctx.stroke();
+      }
       const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
       ctx.fillStyle = res.ok ? '#17a589' : '#e35d5b'; ctx.font = `bold ${22 * sc}px sans-serif`;
       ctx.fillText(res.ok ? '✓' : '✗', mx + 16 * sc, my - 16 * sc);
@@ -1140,7 +1158,7 @@ function pRenderSide() {
   if (photo.stage === 2) {
     $('pPairs').innerHTML = photo.pairs.map((pr, i) => {
       const r = photo.results && photo.results[i];
-      const txt = r ? `${r.perp ? '✅' : '❌'} 垂直　${r.equi ? '✅' : '❌'} 等距　${r.overlap ? '✅' : '❌'} 對折重疊` : '已標記';
+      const txt = r ? `${r.perp ? '✅' : '❌'} 垂直（${r.angle}°）　${r.equi ? '✅' : '❌'} 等距　${r.ok ? '✅' : '❌'} 對折重疊` : '已標記';
       return `<div class="pair"><span class="sw" style="background:${P_COLORS[i % P_COLORS.length]}"></span><b>${LABELS[i]} ↔ ${LABELS[i]}′</b><span class="grow"></span><span>${txt}</span>${photo.passed ? '' : `<button class="btn btn-ghost btn-sm" style="min-height:30px;padding:0 8px" onclick="pRemovePair(${i})" title="移除這組">✕</button>`}</div>`;
     }).join('') + (photo.pending ? `<div class="pair"><span class="sw" style="background:${P_COLORS[n % P_COLORS.length]}"></span>${LABELS[n]} 已點，請點另一邊對應的位置…</div>` : '');
   } else $('pPairs').innerHTML = '';
@@ -1184,20 +1202,31 @@ function pSymmetryScore() {
   return { score: Math.round(score), cover };
 }
 
-/* ---------- 第二關：對稱點判斷 ---------- */
+/* ---------- 第二關：對稱點判斷 ----------
+   以「對折後兩點是否疊在一起」為主判準（v1.3）：
+   - 兩點要在對稱軸不同邊，且都不能太靠近對稱軸（否則任何點都會「重疊」）
+   - 對折後的距離 ≤ 容許誤差（以螢幕 px 換算成畫布 px）
+   - 垂直、等距另外列出，讓學生知道差在哪裡 */
+function pTol() {
+  const c = $('pCanvas'), scale = (c.getBoundingClientRect().width || c.width) / c.width;
+  return Math.max(6, S2_TOL_CSS / (scale || 1));
+}
 function pEvaluatePairs() {
-  const g = pAxisGeom(), tol = 0.045 * Math.min(photo.w, photo.h);
+  const g = pAxisGeom(), tol = pTol();
   return photo.pairs.map(([p, q]) => {
-    const mx = (p.x + q.x) / 2, my = (p.y + q.y) / 2;
-    const distMid = Math.abs(pSide({ x: mx, y: my }, g));                    // 中點到對稱軸的距離
+    const dP = pSide(p, g), dQ = pSide(q, g);
+    const opposite = dP * dQ < 0;
+    const farEnough = Math.abs(dP) > tol * 1.5 && Math.abs(dQ) > tol * 1.5;
     const sx = q.x - p.x, sy = q.y - p.y, SL = Math.hypot(sx, sy) || 1;
-    const cosT = Math.abs((sx / SL) * g.u.x + (sy / SL) * g.u.y);           // 0 = 和對稱軸垂直
-    const angle = Math.round(Math.acos(Math.min(1, cosT)) * 180 / Math.PI);  // 連線和對稱軸的夾角
-    const perp = cosT < 0.17 && SL > tol;                                    // 約 80°～90° 視為垂直
-    const equi = distMid < tol && pSide(p, g) * pSide(q, g) < 0;            // 兩點在不同邊、到軸一樣遠
-    const fp = pFoldPt(pSide(p, g) < 0 ? p : q, g, -1), other = pSide(p, g) < 0 ? q : p;
-    const overlap = Math.hypot(fp.x - other.x, fp.y - other.y) < tol * 1.5;
-    return { perp, equi, overlap, angle, ok: perp && equi };
+    const cosT = Math.abs((sx / SL) * g.u.x + (sy / SL) * g.u.y);
+    const angle = Math.round(Math.acos(Math.min(1, cosT)) * 180 / Math.PI);   // 連線和對稱軸的夾角（0°～90°）
+    const perp = 90 - angle <= S2_PERP_DEG;
+    const equi = opposite && Math.abs(Math.abs(dP) - Math.abs(dQ)) <= tol;
+    const neg = dP < 0 ? p : q, pos = dP < 0 ? q : p;
+    const fp = pFoldPt(neg, g, -1);
+    const gap = Math.hypot(fp.x - pos.x, fp.y - pos.y);
+    const overlap = opposite && gap <= tol;
+    return { perp, equi, overlap, opposite, farEnough, angle, gapRatio: +(gap / tol).toFixed(1), ok: opposite && farEnough && overlap };
   });
 }
 
@@ -1271,10 +1300,15 @@ async function pCheckStage2() {
   pAnimateFold(async () => {
     const lines = res.map((r, i) => {
       const L = LABELS[i];
-      if (r.ok) return `✅ ${L} 和 ${L}′ 的連線和對稱軸垂直，對折後兩點疊在一起。`;
+      if (r.ok) return `✅ ${L} 和 ${L}′：對折後兩點疊在一起（連線和對稱軸夾角 ${r.angle}°）。`;
       const why = [];
-      if (!r.perp) why.push(`連線和對稱軸的夾角大約 ${r.angle}°，要接近 90° 才是垂直`);
-      if (!r.equi) why.push(`兩個點到對稱軸的距離不一樣遠（或在同一邊）`);
+      if (!r.opposite) why.push('兩個點在對稱軸的同一邊，對稱點要在對稱軸的兩邊');
+      else if (!r.farEnough) why.push('點太靠近對稱軸了，請選離對稱軸遠一點、有明顯特徵的位置');
+      else {
+        why.push(`對折後兩點沒有疊在一起（紅線是差距，要落在白色虛線圈裡才算）`);
+        if (!r.perp) why.push(`連線和對稱軸的夾角是 ${r.angle}°，要接近 90° 才是垂直`);
+        if (!r.equi) why.push('兩個點到對稱軸的距離不一樣遠');
+      }
       return `❌ ${L} 和 ${L}′：${why.join('；')}。`;
     }).join('<br>');
     $('pResult').innerHTML = `<div class="notice ${pass ? 'notice-ok' : 'notice-bad'}">${pass
@@ -1284,7 +1318,7 @@ async function pCheckStage2() {
     const up = await pUploadMarked();
     await logAttempt({ stage: 2, type: 'photoPoints', puzzle: { w: photo.w, h: photo.h, axis: photo.axis.map(pNorm) }, answer: { pairs: photo.pairs.map(pr => pr.map(pNorm)), results: res }, correct: pass, imageUrl: up.imageUrl });
     const prev = currentStudent.stage2 || {};
-    const result = { pass: pass || !!prev.pass, pairs: res.map(r => ({ ok: r.ok, perp: r.perp, equi: r.equi, angle: r.angle })), tries: photo.tries2, imageUrl: up.imageUrl, thumb: up.thumb, time: new Date().toISOString() };
+    const result = { pass: pass || !!prev.pass, pairs: res.map(r => ({ ok: r.ok, perp: r.perp, equi: r.equi, angle: r.angle, gapRatio: r.gapRatio })), tries: photo.tries2, imageUrl: up.imageUrl, thumb: up.thumb, time: new Date().toISOString() };
     currentStudent.stage2 = result;
     if (pass) {
       photo.passed = true;
@@ -1305,9 +1339,9 @@ function pGoNext() {
 
 /* ============================================================
    第三關 / 第四關：方格 / 點陣
-   每個圖形：① 選對稱軸 → ② 依序點出所有對稱點（自動連出對稱點連線與另一半）→ ③ 送出檢查，自動對折
+   每個圖形：① 選對稱軸 → ② 點出所有對稱點 → ③ 學生自己選兩點連線畫出另一半 → ④ 送出檢查，自動對折
    ============================================================ */
-const gs = { stage: 3, diff: 'low', round: 0, phase: 'axis', pz: null, picks: [], ok: 0, total: 0,
+const gs = { stage: 3, diff: 'low', round: 0, phase: 'axis', pz: null, picks: [], edges: [], sel: null, ok: 0, total: 0,
   answered: false, lastAxis: null, stats: null, fold: 0, animating: false, results: null };
 
 function gEnter(stage) {
@@ -1334,38 +1368,54 @@ function gNextRound() {
   const pz = generatePuzzle(gs.diff);
   if (!pz) { showToast('題目生成失敗，再試一次', 'err'); return; }
   gs.round++; gs.pz = pz; gs.phase = 'axis'; gs.answered = false; gs.lastAxis = null;
-  gs.picks = []; gs.results = null; gs.fold = 0;
+  gs.picks = []; gs.edges = []; gs.sel = null; gs.results = null; gs.fold = 0;
   $('gFeedback').innerHTML = '';
   gRender();
 }
 function gRecord(correct) { gs.total++; if (correct) gs.ok++; const s = gs.stats[gs.diff]; s.total++; if (correct) s.ok++; }
 function gLerp(a, b, t) { return { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t }; }
+function gKey(p) { return p.x + ',' + p.y; }
+function gEdgeKey(a, b) { const k1 = gKey(a), k2 = gKey(b); return k1 < k2 ? k1 + '|' + k2 : k2 + '|' + k1; }
+function gEnds() { return [gs.pz.half[0], gs.pz.half[gs.pz.half.length - 1]]; }
+/** 正確答案：另一半的頂點與線段 */
+function gAnswer() {
+  const pz = gs.pz, [e1, e2] = gEnds();
+  const pts = pz.inner.map(p => mirrorPt(p, pz.axis, pz.N));
+  const chain = [e1].concat(pts, [e2]);
+  const edges = []; for (let i = 0; i < chain.length - 1; i++) edges.push({ a: chain[i], b: chain[i + 1], key: gEdgeKey(chain[i], chain[i + 1]) });
+  return { pts, edges };
+}
+/** 連線階段可以點的點：學生放的對稱點 + 對稱軸上的兩個端點 */
+function gNodes() { return gs.picks.concat(gEnds()); }
 
 function gRender() {
-  const pz = gs.pz, dots = gs.stage === 4, inner = pz.inner, N = pz.N;
-  const e1 = pz.half[0], e2 = pz.half[pz.half.length - 1];
+  const pz = gs.pz, dots = gs.stage === 4, inner = pz.inner, N = pz.N, n = inner.length;
   $('gRoundTag').textContent = `難度 ${DIFF[gs.diff].label} ・ 第 ${gs.round} / ${ROUNDS_PER_STAGE} 個圖形`;
   $('gScoreTag').textContent = `本次答對 ${gs.ok} / ${gs.total}`;
   const show = (id, on) => $(id).classList.toggle('hidden', !on);
-  show('gUndoBtn', gs.phase === 'points');
-  show('gCheckBtn', gs.phase === 'points');
+  show('gUndoBtn', gs.phase === 'points' || gs.phase === 'connect');
+  show('gCheckBtn', gs.phase === 'connect');
   show('gReplayBtn', gs.phase === 'checked' && !gs.animating);
-  show('gNextBtn', (gs.phase === 'axis' && gs.answered) || (gs.phase === 'checked' && !gs.animating));
-  $('gCheckBtn').disabled = gs.picks.length < inner.length;
-  $('gUndoBtn').disabled = !gs.picks.length;
-  $('gNextBtn').textContent = gs.phase === 'axis' ? '下一步：找對稱點 →' : (gs.round >= ROUNDS_PER_STAGE ? '完成本關 →' : '下一個圖形 →');
+  show('gNextBtn', (gs.phase === 'axis' && gs.answered) || gs.phase === 'points' || (gs.phase === 'checked' && !gs.animating));
+  $('gUndoBtn').disabled = gs.phase === 'points' ? !gs.picks.length : !gs.edges.length && !gs.sel;
+  $('gCheckBtn').disabled = !gs.edges.length;
+  $('gNextBtn').disabled = gs.phase === 'points' && gs.picks.length < n;
+  $('gNextBtn').textContent = gs.phase === 'axis' ? '下一步：找對稱點 →'
+    : gs.phase === 'points' ? '下一步：連線 →'
+    : (gs.round >= ROUNDS_PER_STAGE ? '完成本關 →' : '下一個圖形 →');
 
-  // 對稱點清單
+  // 進度標籤
+  const chip = (cls, txt) => `<span class="pick ${cls}">${txt}</span>`;
   if (gs.phase === 'axis') $('gPickList').innerHTML = '';
-  else $('gPickList').innerHTML = inner.map((_, i) => {
-    let c = 'pick';
-    if (gs.phase === 'checked' && !gs.animating && gs.results) c += gs.results[i] ? ' ok' : ' bad';
-    else if (i < gs.picks.length) c += ' set';
-    else if (i === gs.picks.length) c += ' now';
-    return `<span class="${c}">${LABELS[i]}′</span>`;
-  }).join('');
+  else if (gs.phase === 'points') $('gPickList').innerHTML = chip(gs.picks.length >= n ? 'set' : 'now', `對稱點 ${gs.picks.length} / ${n}`);
+  else if (gs.phase === 'connect') $('gPickList').innerHTML = chip('set', `對稱點 ${n} 個`) + chip(gs.sel ? 'now' : 'set', `已連 ${gs.edges.length} 條線`);
+  else if (!gs.animating && gs.results) {
+    const r = gs.results;
+    $('gPickList').innerHTML = chip(r.ptOk === n && !r.extraPts ? 'ok' : 'bad', `對稱點 ${r.ptOk} / ${n}`) + chip(r.edgeAllOk ? 'ok' : 'bad', `連線 ${r.edgeOk} / ${r.edgeTotal}${r.edgeWrong ? `・多連 ${r.edgeWrong}` : ''}`);
+  } else $('gPickList').innerHTML = '';
 
   const board = $('gBoard'); board.innerHTML = '';
+  const labelsInner = inner.map((p, i) => ({ p, cls: 'mark-target', label: LABELS[i] }));
   let svg;
   if (gs.phase === 'axis') {
     $('gPrompt').textContent = '這個圖形的對稱軸是哪一條？點選你覺得對的那條虛線。';
@@ -1375,36 +1425,47 @@ function gRender() {
       onAxisTap: gs.answered ? null : gAnswerAxis
     });
   } else if (gs.phase === 'points') {
-    const k = gs.picks.length;
-    $('gPrompt').innerHTML = k < inner.length
-      ? `依序點出所有對稱點。現在要找 <b>${LABELS[k]}′</b>（${LABELS[k]} 的對稱點）。`
-      : '所有對稱點都點好了！看看藍色的另一半，確定後按「送出檢查」。';
-    const marks = inner.map((p, i) => ({ p, cls: 'mark-target' + (i === k ? ' active' : ''), label: LABELS[i] }))
-      .concat(gs.picks.map((p, i) => ({ p, cls: 'mark-pick', label: LABELS[i] + '′' })));
-    const studentLine = [e1].concat(gs.picks, k === inner.length ? [e2] : []);
+    $('gPrompt').innerHTML = `在對稱軸的另一邊，點出 ${inner.map((_, i) => LABELS[i]).join('、')} 每一個點的<b>對稱點</b>（共 ${n} 個）。點錯了再點一次就能取消。`;
     svg = buildSVG(pz, {
       dots, showHalf: true, showAxis: true, vertexDots: true,
-      polylines: [{ pts: studentLine, cls: 'fig-student' }],
-      lines: gs.picks.map((p, i) => ({ a: inner[i], b: p, cls: 'pair-line' })),
-      marks, onPointTap: k < inner.length ? gPick : null
+      marks: labelsInner.concat(gs.picks.map(p => ({ p, cls: 'mark-pick' }))),
+      onPointTap: gTapPoint
+    });
+  } else if (gs.phase === 'connect') {
+    $('gPrompt').innerHTML = gs.sel
+      ? '再點另一個點，把這兩個點連起來。（點同一個點可以取消選取）'
+      : '自己決定要把哪兩個點連起來，畫出圖形的<b>另一半</b>。先點一個點，再點另一個點；點已經連好的兩點會把線擦掉。';
+    const nodes = gNodes().map(p => ({ p, cls: gs.sel && ptEq(gs.sel, p) ? 'mark-sel' : 'mark-node' }));
+    svg = buildSVG(pz, {
+      dots, showHalf: true, showAxis: true, vertexDots: true,
+      lines: gs.edges.map(e => ({ a: e.a, b: e.b, cls: 'edge-draw' })),
+      marks: labelsInner.concat(nodes),
+      onPointTap: gTapConnect
     });
   } else {
+    const ans = gAnswer();
     const folded = pz.half.map(p => gLerp(p, mirrorPt(p, pz.axis, N), gs.fold));
-    const done = !gs.animating;
-    const marks = [];
-    gs.picks.forEach((p, i) => {
-      if (!done) marks.push({ p, cls: 'mark-pick', label: LABELS[i] + '′' });
-      else if (gs.results[i]) marks.push({ p, cls: 'mark-ok', label: LABELS[i] + '′' });
-      else { marks.push({ p, cls: 'mark-bad' }); marks.push({ p: mirrorPt(inner[i], pz.axis, N), cls: 'mark-expect', label: LABELS[i] + '′' }); }
-    });
+    const done = !gs.animating && gs.results;
+    const lines = [], marks = labelsInner.slice();
+    if (!done) {
+      gs.edges.forEach(e => lines.push({ a: e.a, b: e.b, cls: 'edge-draw' }));
+      gs.picks.forEach(p => marks.push({ p, cls: 'mark-pick' }));
+    } else {
+      const r = gs.results;
+      inner.forEach((p, i) => lines.push({ a: p, b: ans.pts[i], cls: r.ptHit[i] ? 'pair-line-ok' : 'pair-line' }));
+      gs.edges.forEach(e => lines.push({ a: e.a, b: e.b, cls: r.edgeKeys[e.key] ? 'edge-ok' : 'edge-bad' }));
+      ans.edges.forEach(e => { if (!r.edgeKeys[e.key]) lines.push({ a: e.a, b: e.b, cls: 'edge-miss' }); });
+      gs.picks.forEach(p => { if (!ans.pts.some(q => ptEq(q, p))) marks.push({ p, cls: 'mark-bad' }); });
+      ans.pts.forEach((q, i) => marks.push(r.ptHit[i] ? { p: q, cls: 'mark-ok', label: LABELS[i] + '′' } : { p: q, cls: 'mark-expect', label: LABELS[i] + '′' }));
+    }
     svg = buildSVG(pz, {
       dots, showHalf: true, showAxis: true, vertexDots: true,
-      polylines: [{ pts: [e1].concat(gs.picks, [e2]), cls: 'fig-student' }, { pts: folded, cls: 'fig-fold', dots: 'vtx-fold' }],
-      lines: done ? inner.map((p, i) => ({ a: p, b: mirrorPt(p, pz.axis, N), cls: gs.results[i] ? 'pair-line-ok' : 'pair-line' })) : [],
-      marks
+      polylines: [{ pts: folded, cls: 'fig-fold', dots: 'vtx-fold' }],
+      lines, marks
     });
-    if (gs.animating) $('gPrompt').textContent = '📐 沿著對稱軸對折中…紫色虛線是折過去的那一半。';
-    else $('gPrompt').textContent = '對折完成！紫色虛線是折過去的一半：綠點代表疊上了，紅點代表沒疊上。';
+    $('gPrompt').textContent = gs.animating
+      ? '📐 沿著對稱軸對折中…紫色虛線是折過去的那一半。'
+      : '對折完成！綠色是對的，紅色是點錯或連錯的，綠色長虛線是漏掉的線，灰色點線是對稱點之間的連線（都和對稱軸垂直）。';
   }
   board.appendChild(svg);
 }
@@ -1420,62 +1481,97 @@ function gAnswerAxis(ax) {
   logAttempt({ stage: gs.stage, difficulty: gs.diff, type: 'axis', puzzle: puzzleForLog(gs.pz), answer: { axis: ax }, correct });
   gRender();
 }
-function gPick(p) {
-  if (gs.phase !== 'points' || gs.picks.length >= gs.pz.inner.length) return;
+/* 放對稱點：點空白處新增、點已放的點取消 */
+function gTapPoint(p) {
+  if (gs.phase !== 'points') return;
+  const i = gs.picks.findIndex(q => ptEq(q, p));
+  if (i >= 0) { gs.picks.splice(i, 1); gRender(); return; }
   if (gs.pz.half.some(v => ptEq(v, p))) { showToast('這是原本圖形上的點喔，對稱點要在對稱軸的另一邊', ''); return; }
-  gs.picks.push(p); $('gFeedback').innerHTML = ''; gRender();
+  if (gs.picks.length >= gs.pz.inner.length) { showToast(`已經放了 ${gs.pz.inner.length} 個點，要換位置請先點掉一個`, ''); return; }
+  gs.picks.push(p); gRender();
 }
-function gUndoPick() { if (gs.phase !== 'points' || !gs.picks.length) return; gs.picks.pop(); gRender(); }
+/* 連線：學生自己選兩個點 */
+function gTapConnect(p) {
+  if (gs.phase !== 'connect') return;
+  const node = gNodes().find(q => ptEq(q, p));
+  if (!node) { if (gs.sel) { gs.sel = null; gRender(); } return; }
+  if (!gs.sel) { gs.sel = node; gRender(); return; }
+  if (ptEq(gs.sel, node)) { gs.sel = null; gRender(); return; }
+  const key = gEdgeKey(gs.sel, node);
+  const i = gs.edges.findIndex(e => e.key === key);
+  if (i >= 0) gs.edges.splice(i, 1);
+  else gs.edges.push({ a: gs.sel, b: node, key });
+  gs.sel = null; gRender();
+}
+function gUndoPick() {
+  if (gs.phase === 'points' && gs.picks.length) gs.picks.pop();
+  else if (gs.phase === 'connect') { if (gs.sel) gs.sel = null; else gs.edges.pop(); }
+  gRender();
+}
 
 function gAnimateFold(done) {
   const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   gs.animating = true;
-  if (reduce) { gs.fold = 1; gs.animating = false; gRender(); done && done(); return; }
+  if (reduce) { gs.fold = 1; gs.animating = false; done && done(); gRender(); return; }
   const t0 = performance.now(), D = 1300;
   function step(t) {
     const x = Math.min(1, (t - t0) / D);
     gs.fold = x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2;
-    if (x >= 1) { gs.fold = 1; gs.animating = false; }
+    if (x >= 1) { gs.fold = 1; gs.animating = false; done && done(); }
     gRender();
-    if (x < 1) requestAnimationFrame(step); else done && done();
+    if (x < 1) requestAnimationFrame(step);
   }
   gs.fold = 0; requestAnimationFrame(step);
 }
 function gReplayFold() { if (gs.phase === 'checked' && !gs.animating) gAnimateFold(); }
 
 function gCheckPoints() {
-  const pz = gs.pz;
-  if (gs.phase !== 'points' || gs.picks.length < pz.inner.length) return;
-  gs.results = pz.inner.map((t, i) => ptEq(gs.picks[i], mirrorPt(t, pz.axis, pz.N)));
-  gs.phase = 'checked';
+  const pz = gs.pz, n = pz.inner.length;
+  if (gs.phase !== 'connect' || !gs.edges.length) return;
+  const ans = gAnswer();
+  const ptHit = ans.pts.map(q => gs.picks.some(p => ptEq(p, q)));
+  const ansKeys = {}; ans.edges.forEach(e => { ansKeys[e.key] = true; });
+  const edgeKeys = {}; gs.edges.forEach(e => { edgeKeys[e.key] = !!ansKeys[e.key]; });
+  const edgeOk = gs.edges.filter(e => ansKeys[e.key]).length;
+  const edgeWrong = gs.edges.length - edgeOk;
+  gs.results = {
+    ptHit, ptOk: ptHit.filter(Boolean).length, extraPts: gs.picks.filter(p => !ans.pts.some(q => ptEq(q, p))).length,
+    edgeKeys, edgeOk, edgeWrong, edgeTotal: ans.edges.length, edgeAllOk: edgeOk === ans.edges.length && edgeWrong === 0
+  };
+  gs.phase = 'checked'; gs.sel = null;
   $('gFeedback').innerHTML = '';
   gAnimateFold(() => {
-    const okN = gs.results.filter(Boolean).length, n = pz.inner.length;
+    const r = gs.results;
+    // 紀錄：每個對稱點一筆 + 連線一筆
     pz.inner.forEach((t, i) => {
-      const expect = mirrorPt(t, pz.axis, pz.N), correct = gs.results[i];
-      gRecord(correct);
-      logAttempt({ stage: gs.stage, difficulty: gs.diff, type: 'point', puzzle: puzzleForLog(pz), answer: { target: t, chosen: gs.picks[i], expected: expect }, correct });
+      gRecord(r.ptHit[i]);
+      logAttempt({ stage: gs.stage, difficulty: gs.diff, type: 'point', puzzle: puzzleForLog(pz), answer: { target: t, expected: ans.pts[i], picks: gs.picks }, correct: r.ptHit[i] });
     });
-    const firstBad = gs.results.indexOf(false);
-    let tip = '';
-    if (firstBad >= 0) {
-      const t = pz.inner[firstBad], L = LABELS[firstBad], d = distToAxis(t, pz.axis);
-      tip = d !== null
-        ? `<br>提示：${L} 離對稱軸 <b>${d} 格</b>，所以 ${L}′ 要在對稱軸<b>另一邊</b>、也離 ${d} 格，而且 ${L} 和 ${L}′ 的連線要和對稱軸垂直。`
-        : `<br>提示：斜的對稱軸也一樣，${L} 和 ${L}′ 的連線要和對稱軸垂直，兩點到對稱軸一樣遠。可以沿著方格斜斜地數。`;
+    gRecord(r.edgeAllOk);
+    logAttempt({ stage: gs.stage, difficulty: gs.diff, type: 'edges', puzzle: puzzleForLog(pz), answer: { edges: gs.edges.map(e => [e.a, e.b]), ok: r.edgeOk, wrong: r.edgeWrong, total: r.edgeTotal }, correct: r.edgeAllOk });
+
+    const allOk = r.ptOk === n && r.edgeAllOk;
+    const tips = [];
+    const miss = r.ptHit.indexOf(false);
+    if (miss >= 0) {
+      const t = pz.inner[miss], L = LABELS[miss], d = distToAxis(t, pz.axis);
+      tips.push(d !== null
+        ? `對稱點提示：${L} 離對稱軸 <b>${d} 格</b>，所以 ${L}′ 要在對稱軸另一邊、也離 ${d} 格，而且 ${L} 和 ${L}′ 的連線要和對稱軸垂直。`
+        : `對稱點提示：斜的對稱軸也一樣，${L} 和 ${L}′ 的連線要和對稱軸垂直，兩點到對稱軸一樣遠。`);
     }
-    $('gFeedback').innerHTML = okN === n
-      ? `<div class="notice notice-ok">🎉 ${n} 個對稱點全對！對折後紫色的一半完全疊在你畫的另一半上，每條對稱點連線都和對稱軸垂直。</div>`
-      : `<div class="notice notice-bad">答對 ${okN} / ${n} 個對稱點。紅點是你點的位置，<b>綠色圈圈</b>才是正確的對稱點。${tip}</div>`;
+    if (!r.edgeAllOk) tips.push(`連線提示：另一半要照原來圖形的樣子連。原本 ${LABELS[0]} 連 ${LABELS[1] || '對稱軸'}，另一半就是 ${LABELS[0]}′ 連 ${LABELS[1] ? LABELS[1] + '′' : '對稱軸上的點'}。${r.edgeWrong ? `你多連了 ${r.edgeWrong} 條（紅色）。` : ''}${r.edgeOk < r.edgeTotal ? `還少 ${r.edgeTotal - r.edgeOk} 條（綠色虛線）。` : ''}`);
+    $('gFeedback').innerHTML = allOk
+      ? `<div class="notice notice-ok">🎉 對稱點和連線全對！對折後紫色的一半完全疊在你畫的另一半上。</div>`
+      : `<div class="notice notice-bad">對稱點答對 ${r.ptOk} / ${n}${r.extraPts ? `（有 ${r.extraPts} 個點放錯位置）` : ''}；連線答對 ${r.edgeOk} / ${r.edgeTotal} 條。<br>${tips.join('<br>')}</div>`;
     gs.stats.rounds = (gs.stats.rounds || 0) + 1;
     currentStudent['stage' + gs.stage] = gs.stats;
     saveProgress({ ['stage' + gs.stage]: gs.stats });
-    gRender();
   });
   gRender();
 }
 function gNext() {
   if (gs.phase === 'axis' && gs.answered) { gs.phase = 'points'; gs.picks = []; $('gFeedback').innerHTML = ''; gRender(); return; }
+  if (gs.phase === 'points' && gs.picks.length >= gs.pz.inner.length) { gs.phase = 'connect'; gs.edges = []; gs.sel = null; gRender(); return; }
   if (gs.phase === 'checked' && !gs.animating) gNextRound();
 }
 function gFinish() {
@@ -1627,7 +1723,7 @@ function openDetail(key) {
     rows.forEach(a => box.appendChild(attemptRow(a, false)));
   });
 }
-function typeName(t) { return { axis: '找對稱軸', point: '找對稱點', photo: '實境照片', photoAxis: '照片畫對稱軸', photoPoints: '照片標對稱點' }[t] || t; }
+function typeName(t) { return { axis: '找對稱軸', point: '找對稱點', edges: '連出另一半', photo: '實境照片', photoAxis: '照片畫對稱軸', photoPoints: '照片標對稱點' }[t] || t; }
 function isPhotoType(t) { return String(t || '').indexOf('photo') === 0; }
 function attemptRow(a, withPick) {
   const div = document.createElement('div'); div.className = 'pair'; div.style.alignItems = 'flex-start';
@@ -1636,7 +1732,7 @@ function attemptRow(a, withPick) {
   if (pz) {
     const marks = [];
     if (a.type === 'point' && a.answer) { if (a.answer.target) marks.push({ p: a.answer.target, cls: 'mark-target' }); if (a.answer.chosen) marks.push({ p: a.answer.chosen, cls: a.correct ? 'mark-ok' : 'mark-bad' }); if (!a.correct && a.answer.expected) marks.push({ p: a.answer.expected, cls: 'mark-expect' }); }
-    mini.appendChild(buildSVG(pz, { size: 200, dots: a.stage === 4, showHalf: a.type === 'point', showFull: a.type === 'axis', showAxis: true, marks, candidates: a.type === 'axis' && a.answer && a.answer.axis && !a.correct ? [a.answer.axis] : [], badAxis: a.type === 'axis' && !a.correct && a.answer ? a.answer.axis : null }));
+    mini.appendChild(buildSVG(pz, { size: 200, dots: a.stage === 4, lines: a.type === 'edges' && a.answer && a.answer.edges ? a.answer.edges.map(e => ({ a: e[0], b: e[1], cls: 'edge-draw' })) : [], showHalf: a.type === 'point' || a.type === 'edges', showFull: a.type === 'axis', showAxis: true, marks, candidates: a.type === 'axis' && a.answer && a.answer.axis && !a.correct ? [a.answer.axis] : [], badAxis: a.type === 'axis' && !a.correct && a.answer ? a.answer.axis : null }));
   } else if (safeUrl(a.imageUrl)) {
     const id = (a.imageUrl.match(/\/d\/([^/]+)/) || [])[1];
     mini.innerHTML = id ? `<a href="${safeUrl(a.imageUrl)}" target="_blank" rel="noopener"><img src="https://drive.google.com/thumbnail?id=${escapeHtml(id)}&sz=w200" alt="" style="width:90px;height:90px;object-fit:cover;border-radius:8px"></a>` : '';
@@ -1644,6 +1740,8 @@ function attemptRow(a, withPick) {
   const info = document.createElement('div'); info.className = 'grow';
   let extra = a.type === 'point' && a.answer && a.answer.chosen ? `　點選 (${a.answer.chosen.x},${a.answer.chosen.y})，正確 (${a.answer.expected.x},${a.answer.expected.y})` : '';
   if (a.type === 'photoAxis' && a.answer) extra = `　重疊程度 ${a.answer.score}%`;
+  if (a.type === 'edges' && a.answer) extra = `　連對 ${a.answer.ok}/${a.answer.total} 條${a.answer.wrong ? `、多連 ${a.answer.wrong} 條` : ''}`;
+  if (a.type === 'point' && a.answer && !a.answer.chosen && a.answer.expected) extra = `　正確位置 (${a.answer.expected.x},${a.answer.expected.y})`;
   if (a.type === 'photoPoints' && a.answer && a.answer.results) extra = '　' + a.answer.results.map((r, i) => `${LABELS[i]}：${r.ok ? '✓' : '✗'}（夾角 ${r.angle}°）`).join('、');
   info.innerHTML = `<span class="tag ${a.correct ? 'tag-teal' : 'tag-coral'}">${a.correct ? '✅ 正確' : '❌ 錯誤'}</span> <b>第${a.stage}關</b> ${a.difficulty ? '難度' + (DIFF[a.difficulty] ? DIFF[a.difficulty].label : a.difficulty) : ''} ${typeName(a.type)}${escapeHtml(extra)}<br><span class="muted">${escapeHtml(fmtTime(a.time))}${withPick ? '　' + escapeHtml(whoText(a)) : ''}</span>`;
   div.appendChild(mini); div.appendChild(info);
