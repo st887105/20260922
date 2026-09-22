@@ -472,6 +472,7 @@ svg.puz{width:100%;height:auto;user-select:none;-webkit-user-select:none}
       <div class="row"><p class="h3">第一關：學生上傳的生活對稱照片</p><div class="grow"></div><button class="btn btn-ghost btn-sm" onclick="loadPhotos()">🔄 重新載入</button></div>
       <p class="muted">系統只能檢查對稱點的幾何關係（垂直、等距），「照片本身是不是線對稱」請老師人工檢視 🟡。</p>
     </div>
+    <div class="card mt16" id="folderStatus"><span class="muted">檢查照片資料夾中…</span></div>
     <div class="photo-grid mt16" id="photoWall"></div>
   </div>
 </section>
@@ -504,9 +505,10 @@ svg.puz{width:100%;height:auto;user-select:none;-webkit-user-select:none}
 /* ============================================================
    設定
    ============================================================ */
-const GAS_URL = 'YOUR_GAS_WEB_APP_URL';   // ← 部署後貼上 GAS Web App URL（…/exec）
-const APP_VERSION = 'v1.0';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycby8du8l-6NHXdkDWg35NXLjtMaiC8Gyn7IooF-7enm9t4Bs8zWqyZOiFJlvm1EsQLInYQ/exec';
+const APP_VERSION = 'v1.1';
 const CHANGELOG = [
+  { version: 'v1.1', date: '2026-09-21', desc: '填入正式 GAS Web App 網址；教師後台照片牆新增「照片資料夾狀態」檢查（資料夾是否存在、名稱、檔案數、分享設定、開啟連結）；前後端版本不一致時在頂部橫幅提醒重新部署。' },
   { version: 'v1.0', date: '2026-09-21', desc: '初版：PTC 帳號登入（必須 ptc 開頭＋數字流水號）與進度保存；三關闖關（實境照片檢驗、方格宇宙、點陣星空）；教師後台三檢視（表格／清單／圖卡）、錯題紀錄、紙本學習單產生器（隨機／學生錯題／勾選錯題，附解答頁）、第一關照片牆；學生資料 API 需教師密碼。' }
 ];
 const TOTAL_STAGES = 3;
@@ -1313,7 +1315,24 @@ function renderWrong() {
   box.className = 'card mt16 pairs';
   rows.forEach(a => box.appendChild(attemptRow(a, true)));
 }
+function renderFolderStatus(s) {
+  const box = $('folderStatus');
+  if (!s || !s.success) { box.innerHTML = '<div class="notice notice-bad">❌ 無法取得資料夾狀態：' + escapeHtml(s && s.message) + '</div>'; return; }
+  const ok = s.folderOk && s.nameMatches;
+  const cls = ok ? 'notice-ok' : s.folderOk ? 'notice-warn' : 'notice-bad';
+  const shareOk = s.sharing === 'ANYONE_WITH_LINK';
+  box.innerHTML = `<div class="notice ${cls}"><b>${ok ? '✅' : s.folderOk ? '⚠️' : '❌'} 照片資料夾：${escapeHtml(s.message)}</b></div>
+    ${s.folderName ? `<div class="row mt12" style="font-size:14px">
+      <span>📁 <b>${escapeHtml(s.folderName)}</b></span>
+      <span class="tag tag-gray">${s.fileCount} 張照片</span>
+      <span class="tag ${shareOk ? 'tag-teal' : 'tag-amber'}">${shareOk ? '知道連結者可檢視' : '分享：' + escapeHtml(s.sharing)}</span>
+      <div class="grow"></div>
+      ${safeUrl(s.folderUrl) ? `<a class="btn btn-ghost btn-sm" href="${safeUrl(s.folderUrl)}" target="_blank" rel="noopener">開啟資料夾</a>` : ''}
+    </div>
+    ${shareOk ? '' : '<p class="muted mt8">學校網域若限制「知道連結者」分享，照片縮圖可能只有登入學校帳號的老師看得到，不影響學生上傳。</p>'}` : `<p class="muted mt8">目前設定的 ID：${escapeHtml(s.folderId || '（空白）')}</p>`}`;
+}
 function loadPhotos() {
+  callTeacher({ action: 'getSetupStatus' }, (err, res) => { if (err) { showConnectionError(); return; } renderFolderStatus(res); });
   callTeacher({ action: 'getAttempts', stage: 1, limit: 200 }, (err, res) => {
     if (err) { showConnectionError(); return; }
     const rows = (res.data || []).filter(a => safeUrl(a.imageUrl));
@@ -1416,6 +1435,10 @@ function wsSvg(it, dots, ans) {
   callGAS_JSONP({ action: 'ping' }, (err, res) => {
     if (err) { showConnectionError(); return; }
     if (res && res.appTitle) document.title = '車城國小｜' + res.appTitle;
+    if (res && res.version && res.version !== APP_VERSION) {
+      const bar = $('envBar'); bar.classList.add('local');
+      bar.textContent = `⚠️ 前端 ${APP_VERSION} 與後端 ${res.version} 版本不一致，請確認 GAS 已用「新版本」重新部署`;
+    }
   });
 })();
 </script>
