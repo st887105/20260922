@@ -227,6 +227,11 @@ svg.puz{width:100%;height:auto;user-select:none;-webkit-user-select:none}
 .clamp{display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
 .mini{width:90px;height:90px;flex-shrink:0}
 .mini svg{width:90px;height:90px}
+.zoomable{cursor:zoom-in;border-radius:8px;padding:0;transition:box-shadow .15s}
+.zoomable:hover,.zoomable:focus-visible{box-shadow:0 0 0 3px var(--teal);outline:none}
+.zoom-stage{display:flex;justify-content:center;background:#fbfcfe;border-radius:12px;padding:8px}
+.zoom-stage svg{width:min(560px,100%);height:auto}
+.zoom-stage img{max-width:100%;max-height:70vh;border-radius:8px;object-fit:contain}
 .photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
 .photo{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}
 .photo img{width:100%;aspect-ratio:4/3;object-fit:cover;background:#eee}
@@ -520,6 +525,9 @@ svg.puz{width:100%;height:auto;user-select:none;-webkit-user-select:none}
 <div id="detailModal" class="modal hidden" onclick="if(event.target===this)closeModal('detailModal')">
   <div class="modal-box wide"><button class="modal-x" onclick="closeModal('detailModal')">×</button><div id="detailBody"></div></div>
 </div>
+<div id="zoomModal" class="modal hidden" style="z-index:55" onclick="if(event.target===this)closeModal('zoomModal')">
+  <div class="modal-box wide"><button class="modal-x" onclick="closeModal('zoomModal')" aria-label="關閉">×</button><div id="zoomBody"></div></div>
+</div>
 <div id="toast" class="hidden"></div>
 <div id="loading" class="hidden"><div class="spin"></div><span id="loadingText">處理中…</span></div>
 
@@ -528,8 +536,9 @@ svg.puz{width:100%;height:auto;user-select:none;-webkit-user-select:none}
    設定
    ============================================================ */
 const GAS_URL = 'https://script.google.com/macros/s/AKfycby8du8l-6NHXdkDWg35NXLjtMaiC8Gyn7IooF-7enm9t4Bs8zWqyZOiFJlvm1EsQLInYQ/exec';
-const APP_VERSION = 'v1.3';
+const APP_VERSION = 'v1.4';
 const CHANGELOG = [
+  { version: 'v1.4', date: '2026-09-22', desc: '教師後台作答紀錄與錯題紀錄的縮圖可點擊放大，放大圖附圖例說明；照片紀錄可放大並開啟雲端硬碟原圖；第三、四關的對稱點紀錄會顯示學生放的所有點；Esc 只關閉最上層視窗。' },
   { version: 'v1.3', date: '2026-09-22', desc: '第二關對稱點改以「對折後兩點是否疊在一起」判定：容許誤差以螢幕約 16px 計算、兩點須在對稱軸兩側且不可太靠近對稱軸，對折後畫出容許範圍圈與紅色差距線；垂直標準收緊為 85°～90° 並顯示實際夾角。第三、四關改為先點出所有對稱點，再由學生自己選兩點連線畫出另一半，送出後對折檢查對稱點與連線，漏連（綠色虛線）與多連（紅色）分別標示。' },
   { version: 'v1.2', date: '2026-09-22', desc: '關卡改為四關：第一關照片只畫對稱軸，送出後自動對折並計算左右重疊程度；第二關延續第一關照片標 2 組對稱點，判斷連線是否垂直對稱軸並自動對折看點是否重疊；第三關（原第二關）方格圖改為依序點出所有對稱點，自動連出對稱點連線與另一半，送出後自動對折；第四關為點陣版本。照片關卡改為大圖置中、檢查區在下方。' },
   { version: 'v1.1', date: '2026-09-21', desc: '填入正式 GAS Web App 網址；教師後台照片牆新增「照片資料夾狀態」檢查（資料夾是否存在、名稱、檔案數、分享設定、開啟連結）；前後端版本不一致時在頂部橫幅提醒重新部署。' },
@@ -603,7 +612,11 @@ function showToast(msg, type) {
 function setLoading(on, text) { $('loading').classList.toggle('hidden', !on); if (text) $('loadingText').textContent = text; }
 function openModal(id) { $(id).classList.remove('hidden'); }
 function closeModal(id) { $(id).classList.add('hidden'); }
-document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden')); });
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  const open = [...document.querySelectorAll('.modal')].filter(m => !m.classList.contains('hidden'));
+  if (open.length) open.sort((x, y) => (+y.style.zIndex || 50) - (+x.style.zIndex || 50))[0].classList.add('hidden');
+});
 function showView(id) {
   ['view-login', 'view-map', 'view-photo', 'view-grid', 'view-complete', 'view-teacher'].forEach(v => $(v).classList.toggle('hidden', v !== id));
   window.scrollTo({ top: 0 });
@@ -1725,25 +1738,81 @@ function openDetail(key) {
 }
 function typeName(t) { return { axis: '找對稱軸', point: '找對稱點', edges: '連出另一半', photo: '實境照片', photoAxis: '照片畫對稱軸', photoPoints: '照片標對稱點' }[t] || t; }
 function isPhotoType(t) { return String(t || '').indexOf('photo') === 0; }
+/* 作答紀錄圖：縮圖與放大共用同一組設定（v1.4） */
+function attemptSvgOpts(a, size) {
+  const marks = [];
+  if (a.type === 'point' && a.answer) {
+    (a.answer.picks || []).forEach(p => marks.push({ p, cls: 'mark-pick' }));            // v1.3 起：學生放的所有對稱點
+    if (a.answer.target) marks.push({ p: a.answer.target, cls: 'mark-target' });
+    if (a.answer.chosen) marks.push({ p: a.answer.chosen, cls: a.correct ? 'mark-ok' : 'mark-bad' });
+    if (a.answer.expected) marks.push({ p: a.answer.expected, cls: a.correct ? 'mark-ok' : 'mark-expect' });
+  }
+  return {
+    size, dots: a.stage === 4, marks, showAxis: true,
+    lines: a.type === 'edges' && a.answer && a.answer.edges ? a.answer.edges.map(e => ({ a: e[0], b: e[1], cls: 'edge-draw' })) : [],
+    showHalf: a.type === 'point' || a.type === 'edges', showFull: a.type === 'axis', vertexDots: size > 250,
+    candidates: a.type === 'axis' && a.answer && a.answer.axis && !a.correct ? [a.answer.axis] : [],
+    badAxis: a.type === 'axis' && !a.correct && a.answer ? a.answer.axis : null
+  };
+}
+function attemptExtra(a) {
+  let extra = '';
+  if (a.type === 'point' && a.answer && a.answer.chosen) extra = `點選 (${a.answer.chosen.x},${a.answer.chosen.y})，正確 (${a.answer.expected.x},${a.answer.expected.y})`;
+  else if (a.type === 'point' && a.answer && a.answer.expected) extra = `正確位置 (${a.answer.expected.x},${a.answer.expected.y})`;
+  if (a.type === 'photoAxis' && a.answer) extra = `重疊程度 ${a.answer.score}%`;
+  if (a.type === 'edges' && a.answer) extra = `連對 ${a.answer.ok}/${a.answer.total} 條${a.answer.wrong ? `、多連 ${a.answer.wrong} 條` : ''}`;
+  if (a.type === 'photoPoints' && a.answer && a.answer.results) extra = a.answer.results.map((r, i) => `${LABELS[i]}：${r.ok ? '✓' : '✗'}（夾角 ${r.angle}°）`).join('、');
+  return extra;
+}
+function attemptTitle(a) {
+  const extra = attemptExtra(a);
+  return `<span class="tag ${a.correct ? 'tag-teal' : 'tag-coral'}">${a.correct ? '✅ 正確' : '❌ 錯誤'}</span> <b>第${a.stage}關</b> ${a.difficulty ? '難度' + (DIFF[a.difficulty] ? DIFF[a.difficulty].label : escapeHtml(a.difficulty)) : ''} ${typeName(a.type)}${extra ? '　' + escapeHtml(extra) : ''}`;
+}
+function driveId(u) { return ((u || '').match(/\/d\/([^/]+)/) || [])[1] || ''; }
+
+/* 點縮圖放大 */
+function openZoom(a) {
+  const body = $('zoomBody'); body.innerHTML = '';
+  const head = document.createElement('div');
+  head.innerHTML = `<p class="h3">${attemptTitle(a)}</p><p class="muted mt8">${escapeHtml(whoText(a))}　${escapeHtml(fmtTime(a.time))}</p>`;
+  body.appendChild(head);
+  const pz = !isPhotoType(a.type) ? normalizePuzzle(a.puzzle) : null;
+  const stage = document.createElement('div'); stage.className = 'zoom-stage mt12';
+  if (pz) {
+    stage.appendChild(buildSVG(pz, attemptSvgOpts(a, 560)));
+    body.appendChild(stage);
+    const legend = {
+      point: '🟡 原本的點　🔵 學生放的對稱點　🔴 點錯的位置　🟢 綠圈／綠點＝正確的對稱點',
+      axis: '🔵 藍色虛線＝正確的對稱軸　🔴 紅線＝學生選的錯誤對稱軸（答對時不會出現紅線）',
+      edges: '🔵 藍線＝學生自己連的線　紫線＝原本的一半'
+    }[a.type];
+    if (legend) { const lg = document.createElement('p'); lg.className = 'muted mt8'; lg.textContent = legend; body.appendChild(lg); }
+  } else if (safeUrl(a.imageUrl) && driveId(a.imageUrl)) {
+    const id = driveId(a.imageUrl);
+    stage.innerHTML = `<img src="https://drive.google.com/thumbnail?id=${escapeHtml(id)}&sz=w1400" alt="學生上傳的照片">`;
+    body.appendChild(stage);
+    const lk = document.createElement('p'); lk.className = 'mt8';
+    lk.innerHTML = `<a class="btn btn-ghost btn-sm" href="${safeUrl(a.imageUrl)}" target="_blank" rel="noopener">在雲端硬碟開啟原圖</a>`;
+    body.appendChild(lk);
+  } else {
+    body.insertAdjacentHTML('beforeend', '<p class="muted mt12">這筆紀錄沒有圖片。</p>');
+  }
+  openModal('zoomModal');
+}
+
 function attemptRow(a, withPick) {
   const div = document.createElement('div'); div.className = 'pair'; div.style.alignItems = 'flex-start';
-  const mini = document.createElement('div'); mini.className = 'mini';
+  const mini = document.createElement('button'); mini.className = 'mini zoomable'; mini.type = 'button'; mini.title = '點一下放大';
   const pz = !isPhotoType(a.type) ? normalizePuzzle(a.puzzle) : null;
   if (pz) {
-    const marks = [];
-    if (a.type === 'point' && a.answer) { if (a.answer.target) marks.push({ p: a.answer.target, cls: 'mark-target' }); if (a.answer.chosen) marks.push({ p: a.answer.chosen, cls: a.correct ? 'mark-ok' : 'mark-bad' }); if (!a.correct && a.answer.expected) marks.push({ p: a.answer.expected, cls: 'mark-expect' }); }
-    mini.appendChild(buildSVG(pz, { size: 200, dots: a.stage === 4, lines: a.type === 'edges' && a.answer && a.answer.edges ? a.answer.edges.map(e => ({ a: e[0], b: e[1], cls: 'edge-draw' })) : [], showHalf: a.type === 'point' || a.type === 'edges', showFull: a.type === 'axis', showAxis: true, marks, candidates: a.type === 'axis' && a.answer && a.answer.axis && !a.correct ? [a.answer.axis] : [], badAxis: a.type === 'axis' && !a.correct && a.answer ? a.answer.axis : null }));
-  } else if (safeUrl(a.imageUrl)) {
-    const id = (a.imageUrl.match(/\/d\/([^/]+)/) || [])[1];
-    mini.innerHTML = id ? `<a href="${safeUrl(a.imageUrl)}" target="_blank" rel="noopener"><img src="https://drive.google.com/thumbnail?id=${escapeHtml(id)}&sz=w200" alt="" style="width:90px;height:90px;object-fit:cover;border-radius:8px"></a>` : '';
+    mini.appendChild(buildSVG(pz, attemptSvgOpts(a, 200)));
+  } else if (safeUrl(a.imageUrl) && driveId(a.imageUrl)) {
+    mini.innerHTML = `<img src="https://drive.google.com/thumbnail?id=${escapeHtml(driveId(a.imageUrl))}&sz=w200" alt="" style="width:90px;height:90px;object-fit:cover;border-radius:8px">`;
   }
+  if (mini.childNodes.length) mini.addEventListener('click', () => openZoom(a));
+  else mini.disabled = true;
   const info = document.createElement('div'); info.className = 'grow';
-  let extra = a.type === 'point' && a.answer && a.answer.chosen ? `　點選 (${a.answer.chosen.x},${a.answer.chosen.y})，正確 (${a.answer.expected.x},${a.answer.expected.y})` : '';
-  if (a.type === 'photoAxis' && a.answer) extra = `　重疊程度 ${a.answer.score}%`;
-  if (a.type === 'edges' && a.answer) extra = `　連對 ${a.answer.ok}/${a.answer.total} 條${a.answer.wrong ? `、多連 ${a.answer.wrong} 條` : ''}`;
-  if (a.type === 'point' && a.answer && !a.answer.chosen && a.answer.expected) extra = `　正確位置 (${a.answer.expected.x},${a.answer.expected.y})`;
-  if (a.type === 'photoPoints' && a.answer && a.answer.results) extra = '　' + a.answer.results.map((r, i) => `${LABELS[i]}：${r.ok ? '✓' : '✗'}（夾角 ${r.angle}°）`).join('、');
-  info.innerHTML = `<span class="tag ${a.correct ? 'tag-teal' : 'tag-coral'}">${a.correct ? '✅ 正確' : '❌ 錯誤'}</span> <b>第${a.stage}關</b> ${a.difficulty ? '難度' + (DIFF[a.difficulty] ? DIFF[a.difficulty].label : a.difficulty) : ''} ${typeName(a.type)}${escapeHtml(extra)}<br><span class="muted">${escapeHtml(fmtTime(a.time))}${withPick ? '　' + escapeHtml(whoText(a)) : ''}</span>`;
+  info.innerHTML = `${attemptTitle(a)}<br><span class="muted">${escapeHtml(fmtTime(a.time))}${withPick ? '　' + escapeHtml(whoText(a)) : ''}</span>`;
   div.appendChild(mini); div.appendChild(info);
   if (withPick && pz) {
     const k = JSON.stringify(a.puzzle);
