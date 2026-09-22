@@ -1,0 +1,1423 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>車城國小｜對稱密碼特務</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   對稱密碼特務 — 自建輕量 CSS（無 Tailwind CDN、無外部 CSS 依賴）
+   ⚠️ 日後新增樣式請直接補在本區塊，不要引入 cdn.tailwindcss.com
+   ============================================================ */
+:root{
+  --navy:#1f2d4d;--navy-2:#2b3d66;--paper:#f6f7fb;--card:#ffffff;--ink:#1b2130;--muted:#6b7385;
+  --line:#dde3ee;--teal:#17a589;--teal-bg:#e6f7f2;--coral:#e35d5b;--coral-bg:#fdecec;
+  --amber:#f2b632;--amber-bg:#fff6dc;--sky:#3b82c4;--sky-bg:#e8f1fb;--violet:#7b61c9;
+  --r:14px;--shadow:0 4px 18px rgba(31,45,77,.08);
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*,::before,::after{box-sizing:border-box;border:0 solid var(--line);margin:0;padding:0}
+html{scroll-padding-top:env(safe-area-inset-top,0px);-webkit-text-size-adjust:100%}
+body{font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;background:var(--paper);color:var(--ink);line-height:1.6;min-height:100vh}
+button{font:inherit;cursor:pointer;color:inherit;background:none}
+input,select{font:inherit;color:inherit}
+img,svg,canvas{max-width:100%;display:block}
+.hidden{display:none !important}
+
+/* Header */
+header{background:var(--navy);color:#fff;padding:12px 16px;position:sticky;top:env(safe-area-inset-top,0px);z-index:20}
+.hwrap{max-width:1100px;margin:0 auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px}
+.brand svg{width:34px;height:34px}
+.brand h1{font-size:18px;font-weight:900;letter-spacing:.5px;line-height:1.2}
+.brand small{display:block;font-size:11px;opacity:.75;font-weight:400}
+.version-badge{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:2px 10px;font-size:12px;color:#fff}
+.version-badge:hover{background:rgba(255,255,255,.3)}
+.hspacer{flex:1}
+.chip{background:rgba(255,255,255,.12);border-radius:999px;padding:4px 12px;font-size:13px;display:flex;align-items:center;gap:8px}
+.chip b{color:var(--amber)}
+.linkbtn{color:#fff;opacity:.85;font-size:13px;text-decoration:underline;text-underline-offset:3px}
+.linkbtn:hover{opacity:1}
+
+.envbar{background:var(--teal-bg);color:#0f6a58;font-size:12px;text-align:center;padding:5px 12px;border-bottom:1px solid #c7ebe0}
+.envbar.local{background:var(--amber-bg);color:#7a5600;border-color:#f3e2ad}
+#errBanner{background:var(--coral);color:#fff;text-align:center;padding:8px 14px;font-size:14px}
+
+main{max-width:1100px;margin:0 auto;padding:18px 14px 40px}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:24px 12px}
+
+/* Generic */
+.card{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);padding:20px}
+.card + .card{margin-top:16px}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.grow{flex:1}
+.mt8{margin-top:8px}.mt12{margin-top:12px}.mt16{margin-top:16px}.mt24{margin-top:24px}
+.muted{color:var(--muted);font-size:13px}
+.h2{font-size:20px;font-weight:900}
+.h3{font-size:16px;font-weight:700}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:0 18px;border-radius:10px;font-weight:700;font-size:15px;transition:transform .08s,box-shadow .15s;border:2px solid transparent}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-primary{background:var(--teal);color:#fff}
+.btn-primary:hover{box-shadow:0 4px 14px rgba(23,165,137,.35)}
+.btn-navy{background:var(--navy);color:#fff}
+.btn-ghost{background:#fff;border-color:var(--line);color:var(--ink)}
+.btn-ghost:hover{border-color:var(--navy-2)}
+.btn-coral{background:var(--coral);color:#fff}
+.btn-sm{min-height:36px;padding:0 12px;font-size:13px;border-radius:8px}
+.btn-lg{min-height:52px;font-size:17px;padding:0 26px}
+.field{display:flex;flex-direction:column;gap:4px;font-size:14px;font-weight:700}
+.field input,.field select{border:2px solid var(--line);border-radius:10px;padding:10px 12px;min-height:44px;font-weight:400;background:#fff;width:100%}
+.field input:focus,.field select:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(23,165,137,.18)}
+.tag{display:inline-block;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700}
+.tag-teal{background:var(--teal-bg);color:#0f6a58}
+.tag-coral{background:var(--coral-bg);color:#a83a38}
+.tag-amber{background:var(--amber-bg);color:#7a5600}
+.tag-sky{background:var(--sky-bg);color:#1f5c94}
+.tag-gray{background:#eef0f5;color:var(--muted)}
+.notice{border-radius:10px;padding:12px 14px;font-size:14px}
+.notice-ok{background:var(--teal-bg);color:#0f6a58}
+.notice-bad{background:var(--coral-bg);color:#a83a38}
+.notice-info{background:var(--sky-bg);color:#1f5c94}
+.notice-warn{background:var(--amber-bg);color:#7a5600}
+.progress{height:12px;background:#e9edf5;border-radius:999px;overflow:hidden}
+.progress > i{display:block;height:100%;background:linear-gradient(90deg,var(--amber),#f7d06a);border-radius:999px;transition:width .5s}
+
+/* Login */
+.login-wrap{max-width:460px;margin:24px auto}
+.login-hero{text-align:center;margin-bottom:18px}
+.login-hero h2{font-size:26px;font-weight:900;color:var(--navy)}
+.login-hero p{color:var(--muted);font-size:14px}
+.mirror-mark{width:120px;height:120px;margin:0 auto 10px}
+
+/* Mission map */
+.xpbar{display:flex;align-items:center;gap:14px}
+.xpbar .num{font-size:22px;font-weight:900;color:#b47d00;white-space:nowrap}
+.stages{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:16px}
+.stage{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);padding:18px;border:2px solid transparent;display:flex;flex-direction:column;gap:8px;position:relative}
+.stage.current{border-color:var(--teal)}
+.stage.locked{opacity:.55}
+.stage .no{font-size:12px;font-weight:700;color:var(--muted)}
+.stage h3{font-size:18px;font-weight:900;color:var(--navy)}
+.stage p{font-size:13px;color:var(--muted);flex:1}
+.stage .st{position:absolute;top:14px;right:14px}
+
+/* Stage layout */
+.stagehead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.stagehead .title{font-size:20px;font-weight:900;color:var(--navy)}
+.diffs{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}
+.diff{border:2px solid var(--line);border-radius:var(--r);padding:16px 12px;text-align:center;background:#fff}
+.diff:hover{border-color:var(--teal)}
+.diff b{font-size:22px;display:block}
+.diff span{font-size:12px;color:var(--muted)}
+.play{display:grid;grid-template-columns:minmax(0,420px) 1fr;gap:18px;align-items:start}
+@media (max-width:760px){.play{grid-template-columns:1fr}}
+.board{background:#fff;border-radius:var(--r);box-shadow:var(--shadow);padding:10px;touch-action:manipulation}
+.prompt{font-size:17px;font-weight:700;color:var(--navy)}
+.feedback{min-height:56px}
+
+/* Puzzle SVG */
+svg.puz{width:100%;height:auto;user-select:none;-webkit-user-select:none}
+.puz .bg{fill:#fbfcfe}
+.puz .gridline{stroke:#d5dceb;stroke-width:1}
+.puz .dot{fill:#b9c3d8}
+.puz .fig-full{fill:rgba(123,97,201,.18);stroke:var(--violet);stroke-width:3;stroke-linejoin:round}
+.puz .fig-half{fill:none;stroke:var(--violet);stroke-width:3;stroke-linejoin:round;stroke-linecap:round}
+.puz .fig-reveal{fill:rgba(23,165,137,.16);stroke:var(--teal);stroke-width:3;stroke-linejoin:round;animation:pop .5s ease-out}
+@keyframes pop{from{opacity:0;transform:scale(.96);transform-origin:center}to{opacity:1;transform:scale(1)}}
+.puz .axis{stroke:var(--sky);stroke-width:3;stroke-dasharray:9 6}
+.puz .cand{stroke:#9aa7c2;stroke-width:3;stroke-dasharray:8 6;pointer-events:none}
+.puz .cand-hit{stroke:transparent;stroke-width:26;cursor:pointer}
+.puz .cand-hit:hover + .cand{stroke:var(--navy-2)}
+.puz .cand.sel{stroke:var(--navy);stroke-dasharray:none;stroke-width:4}
+.puz .cand.ok{stroke:var(--teal);stroke-dasharray:none;stroke-width:5}
+.puz .cand.bad{stroke:var(--coral);stroke-dasharray:none;stroke-width:5}
+.puz .pt-hit{fill:transparent;cursor:pointer}
+.puz .pt-hit:hover{fill:rgba(23,165,137,.18)}
+.puz .mark-target{fill:var(--amber);stroke:#b47d00;stroke-width:2}
+.puz .mark-target.active{animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{r:9}50%{r:12}}
+.puz .mark-ok{fill:var(--teal);stroke:#0f6a58;stroke-width:2}
+.puz .mark-bad{fill:var(--coral);stroke:#a83a38;stroke-width:2}
+.puz .mark-expect{fill:none;stroke:var(--teal);stroke-width:3}
+.puz .mark-vertex{fill:var(--violet)}
+.puz .lbl{font-size:15px;font-weight:900;fill:var(--ink);pointer-events:none}
+.puz .helper{stroke:var(--teal);stroke-width:2;stroke-dasharray:4 4}
+.puz .print-bg{fill:#fff}
+.puz .print-gridline{stroke:#9a9a9a;stroke-width:1}
+.puz .print-dot{fill:#555}
+.puz .print-half{fill:none;stroke:#000;stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round}
+.puz .print-full{fill:#e6e6e6;stroke:#000;stroke-width:2.5;stroke-linejoin:round}
+.puz .print-axis{stroke:#000;stroke-width:2;stroke-dasharray:8 5}
+.puz .print-vertex{fill:#000}
+.puz .print-lbl{font-size:14px;font-weight:700;fill:#000}
+
+/* Stage 1 */
+.canvas-wrap{position:relative;background:#111;border-radius:12px;overflow:hidden}
+#s1canvas{width:100%;height:auto;touch-action:none;cursor:crosshair}
+.steps{display:grid;gap:8px}
+.step{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:10px;background:#f2f4f9;font-size:14px}
+.step.on{background:var(--teal-bg)}
+.step.done{background:#eef0f5;color:var(--muted)}
+.step .n{width:24px;height:24px;border-radius:50%;background:var(--navy);color:#fff;font-weight:900;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.pairs{display:grid;gap:6px;font-size:13px}
+.pair{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:8px;background:#f7f8fb}
+.pair .sw{width:14px;height:14px;border-radius:50%}
+.filebtn{position:relative;overflow:hidden}
+.filebtn input{position:absolute;inset:0;opacity:0;cursor:pointer}
+
+/* Complete */
+.badge-wrap{text-align:center;padding:24px 10px}
+.badge{width:160px;height:160px;margin:0 auto 12px}
+.badge-title{font-size:26px;font-weight:900;color:var(--navy)}
+
+/* Teacher */
+.tabs{display:flex;gap:6px;flex-wrap:wrap;border-bottom:2px solid var(--line);margin-bottom:16px}
+.tab{padding:10px 16px;font-weight:700;border-bottom:3px solid transparent;margin-bottom:-2px;color:var(--muted)}
+.tab.on{color:var(--navy);border-color:var(--navy)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+.stat{border-radius:10px;padding:12px;text-align:center}
+.stat b{font-size:24px;display:block}
+.stat span{font-size:12px}
+.stat-teal{background:var(--teal-bg);color:#0f6a58}.stat-amber{background:var(--amber-bg);color:#7a5600}
+.stat-sky{background:var(--sky-bg);color:#1f5c94}.stat-gray{background:#eef0f5;color:var(--muted)}
+.seg{display:inline-flex;border:2px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{padding:8px 14px;font-weight:700;font-size:13px;color:var(--muted)}
+.seg button.on{background:var(--navy);color:#fff}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{background:#eef0f5;text-align:left;padding:10px 8px;font-weight:700;white-space:nowrap}
+.tbl td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+.tbl tr:hover td{background:#fafbfe}
+.tblwrap{overflow-x:auto}
+.list-item{border:1px solid var(--line);border-radius:12px;padding:14px;display:grid;grid-template-columns:200px 1fr;gap:14px}
+@media (max-width:640px){.list-item{grid-template-columns:1fr}}
+.list-item + .list-item{margin-top:10px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.scard{border:1px solid var(--line);border-radius:12px;padding:14px;background:#fff;display:flex;flex-direction:column;gap:8px}
+.scard .who{font-weight:900;color:var(--navy)}
+.kv{font-size:13px;background:#f7f8fb;border-radius:8px;padding:8px 10px}
+.kv b{display:block;font-size:12px;color:var(--muted)}
+.clamp{display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+.mini{width:90px;height:90px;flex-shrink:0}
+.mini svg{width:90px;height:90px}
+.photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.photo{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}
+.photo img{width:100%;aspect-ratio:4/3;object-fit:cover;background:#eee}
+.photo div{padding:8px 10px;font-size:13px}
+.wsgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
+.wsq{border:1px solid var(--line);border-radius:10px;padding:8px;background:#fff}
+.wsq .q{font-size:12px;font-weight:700;margin-bottom:4px}
+
+/* Modal / toast / loading */
+.modal{position:fixed;inset:0;background:rgba(20,28,48,.55);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
+.modal-box{background:#fff;border-radius:16px;max-width:640px;width:100%;max-height:88vh;overflow:auto;padding:22px;position:relative}
+.modal-box.wide{max-width:900px}
+.modal-x{position:absolute;top:10px;right:12px;font-size:22px;color:var(--muted);width:36px;height:36px}
+#toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 18px;border-radius:999px;font-size:14px;z-index:60;box-shadow:0 6px 20px rgba(0,0,0,.25);transition:opacity .3s}
+#toast.err{background:var(--coral)}#toast.ok{background:var(--teal)}
+#loading{position:fixed;inset:0;background:rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;z-index:70;flex-direction:column;gap:10px;font-weight:700;color:var(--navy)}
+.spin{width:44px;height:44px;border:5px solid #dfe4ee;border-top-color:var(--teal);border-radius:50%;animation:rot .8s linear infinite}
+@keyframes rot{to{transform:rotate(360deg)}}
+.cl-item{padding:10px 0;border-bottom:1px solid var(--line);font-size:14px}
+.cl-item b{color:var(--navy)}
+
+/* Print worksheet */
+#printArea{display:none}
+@media print{
+  body *{visibility:hidden}
+  #printArea,#printArea *{visibility:visible}
+  #printArea{display:block;position:absolute;left:0;top:0;width:100%;background:#fff;color:#000}
+  .ws-page{page-break-after:always;padding:8mm}
+  .ws-page:last-child{page-break-after:auto}
+  .ws-head{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #000;padding-bottom:6px;margin-bottom:10px}
+  .ws-head h2{font-size:20px;font-weight:900}
+  .ws-head span{font-size:13px}
+  .ws-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8mm}
+  .ws-q{border:1px solid #000;border-radius:6px;padding:6px;page-break-inside:avoid}
+  .ws-q .q{font-size:13px;font-weight:700;margin-bottom:4px}
+  .ws-q svg{width:100%;height:auto}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none !important;transition:none !important}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hwrap">
+    <div class="brand">
+      <svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 4 L20 36" stroke="#f2b632" stroke-width="2" stroke-dasharray="4 3"/><path d="M19 8 L8 14 L11 26 L19 32Z" fill="#17a589"/><path d="M21 8 L32 14 L29 26 L21 32Z" fill="#7b61c9"/></svg>
+      <h1>對稱密碼特務<small>車城國小・五年級數學・線對稱圖形闖關</small></h1>
+    </div>
+    <button class="version-badge" id="verBadge" onclick="openChangelog()">v?</button>
+    <div class="hspacer"></div>
+    <div class="chip hidden" id="studentChip"><span id="chipName"></span><span>⭐ <b id="chipXp">0</b> XP</span><button class="linkbtn" onclick="logout()">登出</button></div>
+    <div class="chip hidden" id="teacherChip"><span>👩‍🏫 教師後台</span><button class="linkbtn" onclick="logout()">離開</button></div>
+  </div>
+</header>
+<div class="envbar" id="envBar">連線中…</div>
+<div id="errBanner" class="hidden"></div>
+
+<main>
+
+<!-- ===================== 登入 ===================== -->
+<section id="view-login" class="login-wrap">
+  <div class="login-hero">
+    <svg class="mirror-mark" viewBox="0 0 120 120" aria-hidden="true">
+      <line x1="60" y1="6" x2="60" y2="114" stroke="#3b82c4" stroke-width="3" stroke-dasharray="8 6"/>
+      <path d="M58 20 L30 34 L22 62 L36 92 L58 100 Z" fill="rgba(123,97,201,.18)" stroke="#7b61c9" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M62 20 L90 34 L98 62 L84 92 L62 100 Z" fill="rgba(23,165,137,.16)" stroke="#17a589" stroke-width="3" stroke-linejoin="round"/>
+      <circle cx="30" cy="34" r="5" fill="#f2b632"/><circle cx="90" cy="34" r="5" fill="#f2b632"/>
+    </svg>
+    <h2>特務報到</h2>
+    <p>輸入你的 PTC 帳號（ptc 開頭的那串），領取對稱任務。下次用同一個帳號登入，就能接續進度。</p>
+  </div>
+  <div class="card">
+    <label class="field">PTC 帳號<input id="inPtc" placeholder="例：ptc1234567" maxlength="40" autocomplete="username" autocapitalize="off" spellcheck="false" oninput="ptcHint()" onkeydown="if(event.key==='Enter')doLogin()"></label>
+    <p class="muted mt8" id="ptcHintText">一定要打 ptc 開頭，後面接數字。</p>
+    <label class="field mt12"><span>姓名 <span class="muted" style="font-weight:400">（第一次登入必填）</span></span><input id="inName" placeholder="你的名字" maxlength="20" onkeydown="if(event.key==='Enter')doLogin()"></label>
+    <button class="btn btn-primary btn-lg mt16" style="width:100%" id="btnLogin" onclick="doLogin()">🚀 開始任務</button>
+    <p class="muted mt12" style="text-align:center"><button class="linkbtn" style="color:var(--muted)" onclick="openTeacherLogin()">教師後台入口</button></p>
+  </div>
+</section>
+
+<!-- ===================== 任務地圖 ===================== -->
+<section id="view-map" class="hidden">
+  <div class="card">
+    <div class="xpbar">
+      <div class="num">⭐ <span id="mapXp">0</span> / 800 XP</div>
+      <div class="progress grow"><i id="mapBar" style="width:0%"></i></div>
+    </div>
+    <p class="muted mt8" id="mapHint">完成三關任務，就能解鎖「幾何黃金比例」徽章！</p>
+  </div>
+  <div class="stages" id="stageCards"></div>
+</section>
+
+<!-- ===================== 第一關：生活對稱檢驗 ===================== -->
+<section id="view-s1" class="hidden">
+  <div class="stagehead"><span class="tag tag-sky">第一關</span><span class="title">生活對稱檢驗</span><span class="tag tag-amber">+200 XP</span><div class="grow"></div><button class="btn btn-ghost btn-sm" onclick="showMap()">← 回任務地圖</button></div>
+  <div class="play">
+    <div>
+      <div class="card" id="s1upload">
+        <p class="prompt">找一個你覺得是線對稱的東西，拍下來！</p>
+        <p class="muted mt8">葉子、蝴蝶、建築物、玩具、自己的臉都可以。拍正面、光線亮一點，比較好判斷。</p>
+        <div class="row mt16">
+          <button class="btn btn-primary btn-lg filebtn">📷 拍照或選照片<input type="file" accept="image/*" capture="environment" onchange="s1LoadFile(this)"></button>
+          <button class="btn btn-ghost btn-lg filebtn">🖼️ 從相簿選<input type="file" accept="image/*" onchange="s1LoadFile(this)"></button>
+        </div>
+      </div>
+      <div class="board hidden" id="s1board">
+        <div class="canvas-wrap"><canvas id="s1canvas"></canvas></div>
+        <div class="row mt8">
+          <button class="btn btn-ghost btn-sm" onclick="s1Undo()">↩ 復原一步</button>
+          <button class="btn btn-ghost btn-sm" onclick="s1Clear()">🗑 全部重畫</button>
+          <button class="btn btn-ghost btn-sm filebtn">換一張照片<input type="file" accept="image/*" onchange="s1LoadFile(this)"></button>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="steps">
+          <div class="step" id="s1step1"><span class="n">1</span><div><b>畫出對稱軸</b><br><span class="muted">在照片上點兩下，兩點會連成一條藍色的對稱軸。</span></div></div>
+          <div class="step" id="s1step2"><span class="n">2</span><div><b>標記對稱點（至少 3 組）</b><br><span class="muted">先點一邊的某個位置，再點另一邊「對摺後會重疊」的位置。</span></div></div>
+          <div class="step" id="s1step3"><span class="n">3</span><div><b>送出檢查</b><br><span class="muted">系統會檢查每一組對稱點的連線，是不是和對稱軸垂直、而且到對稱軸一樣遠。</span></div></div>
+        </div>
+        <div class="pairs mt12" id="s1pairs"></div>
+        <div class="feedback mt12" id="s1feedback"></div>
+        <div class="row mt12">
+          <button class="btn btn-primary" id="s1check" onclick="s1Check()" disabled>✅ 送出檢查</button>
+          <button class="btn btn-navy hidden" id="s1next" onclick="showMap()">🎉 回任務地圖，前往第二關</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 第二關 / 第三關（共用） ===================== -->
+<section id="view-grid" class="hidden">
+  <div class="stagehead"><span class="tag tag-sky" id="gStageTag">第二關</span><span class="title" id="gStageTitle">方格宇宙挑戰</span><span class="tag tag-amber">+300 XP</span><div class="grow"></div><button class="btn btn-ghost btn-sm" onclick="showMap()">← 回任務地圖</button></div>
+
+  <div class="card" id="gDiffPanel">
+    <p class="prompt" id="gDiffPrompt">選擇你的挑戰難度</p>
+    <p class="muted mt8">每個難度都要完成 3 題。每一題要先找出「對稱軸」，再找出「對稱點」。答錯沒關係，系統會告訴你正確答案，老師也會幫你做專屬練習單。</p>
+    <div class="diffs">
+      <button class="diff" onclick="gChooseDiff('low')"><b>🌱 低</b><span>7×7・對稱軸直立・找 1 個對稱點</span></button>
+      <button class="diff" onclick="gChooseDiff('mid')"><b>🌿 中</b><span>9×9・對稱軸直立或橫躺・找 2 個對稱點</span></button>
+      <button class="diff" onclick="gChooseDiff('high')"><b>🌳 高</b><span>9×9・對稱軸可能是斜的・找 3 個對稱點</span></button>
+    </div>
+  </div>
+
+  <div class="play hidden" id="gPlay">
+    <div class="board" id="gBoard"></div>
+    <div class="card">
+      <div class="row"><span class="tag tag-gray" id="gRoundTag"></span><span class="tag tag-teal" id="gScoreTag"></span></div>
+      <p class="prompt mt12" id="gPrompt"></p>
+      <div class="feedback mt12" id="gFeedback"></div>
+      <div class="row mt12">
+        <button class="btn btn-primary hidden" id="gNextBtn" onclick="gNext()">下一步 →</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card hidden" id="gResult">
+    <p class="h2">🎯 本關完成！</p>
+    <div class="stats mt12" id="gResultStats"></div>
+    <div class="feedback mt12" id="gResultMsg"></div>
+    <div class="row mt16">
+      <button class="btn btn-ghost" onclick="gShowDiff()">🔁 換個難度再挑戰</button>
+      <button class="btn btn-primary" onclick="showMap()">回任務地圖 →</button>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 完賽 ===================== -->
+<section id="view-complete" class="hidden">
+  <div class="card badge-wrap">
+    <svg class="badge" viewBox="0 0 160 160" aria-hidden="true">
+      <circle cx="80" cy="80" r="74" fill="#fff6dc" stroke="#f2b632" stroke-width="6"/>
+      <circle cx="80" cy="80" r="60" fill="none" stroke="#f2b632" stroke-width="2" stroke-dasharray="6 5"/>
+      <line x1="80" y1="34" x2="80" y2="126" stroke="#3b82c4" stroke-width="3" stroke-dasharray="7 5"/>
+      <path d="M77 44 L52 58 L46 84 L58 112 L77 120 Z" fill="#7b61c9"/>
+      <path d="M83 44 L108 58 L114 84 L102 112 L83 120 Z" fill="#17a589"/>
+    </svg>
+    <div class="badge-title">幾何黃金比例</div>
+    <p class="muted">恭喜特務 <b id="cName"></b> 完成全部三關，獲得 <b>800 XP</b>！</p>
+    <p class="mt12" id="cSummary"></p>
+    <div class="row mt16" style="justify-content:center">
+      <button class="btn btn-ghost" onclick="showMap()">回任務地圖再練習</button>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 教師後台 ===================== -->
+<section id="view-teacher" class="hidden">
+  <div class="tabs">
+    <button class="tab on" data-tab="overview" onclick="tTab('overview')">📊 學生總覽</button>
+    <button class="tab" data-tab="wrong" onclick="tTab('wrong')">❌ 錯題紀錄</button>
+    <button class="tab" data-tab="ws" onclick="tTab('ws')">🖨️ 學習單產生器</button>
+    <button class="tab" data-tab="photos" onclick="tTab('photos')">📷 第一關照片牆</button>
+  </div>
+
+  <!-- 學生總覽 -->
+  <div id="tab-overview">
+    <div class="card">
+      <div class="stats" id="tStats"></div>
+      <div class="row mt16">
+        <label class="field" style="flex:1 1 180px">搜尋帳號或姓名<input id="tSearch" placeholder="ptc… 或 姓名" oninput="renderStudents()"></label>
+        <label class="field" style="flex:0 1 170px">最近登入日期<select id="tDateFilter" onchange="renderStudents()"><option value="">全部</option></select></label>
+        <div class="seg">
+          <button class="on" data-v="table" onclick="tView('table')">📋 表格</button>
+          <button data-v="list" onclick="tView('list')">📝 清單</button>
+          <button data-v="card" onclick="tView('card')">🖼️ 圖卡</button>
+        </div>
+        <label class="field hidden" id="tFocusWrap" style="flex:0 1 200px">圖卡聚焦欄位<select id="tFocus" onchange="renderStudents()"><option value="">全部</option></select></label>
+        <div class="grow"></div>
+        <button class="btn btn-ghost btn-sm" onclick="loadStudents()">🔄 重新載入</button>
+      </div>
+    </div>
+    <div class="card mt16" id="tStudentsWrap"></div>
+  </div>
+
+  <!-- 錯題紀錄 -->
+  <div id="tab-wrong" class="hidden">
+    <div class="card">
+      <div class="row">
+        <label class="field" style="flex:0 1 140px">關卡<select id="wStage" onchange="renderWrong()"><option value="">全部</option><option value="1">第一關</option><option value="2">第二關</option><option value="3">第三關</option></select></label>
+        <label class="field" style="flex:1 1 180px">搜尋帳號或姓名<input id="wSearch" placeholder="ptc… 或 姓名" oninput="renderWrong()"></label>
+        <div class="grow"></div>
+        <span class="muted">已勾選 <b id="wPicked">0</b> 題 → 可到「學習單產生器」選「勾選的錯題」</span>
+        <button class="btn btn-ghost btn-sm" onclick="loadWrong()">🔄 重新載入</button>
+      </div>
+    </div>
+    <div class="card mt16" id="wList"></div>
+  </div>
+
+  <!-- 學習單產生器 -->
+  <div id="tab-ws" class="hidden">
+    <div class="card">
+      <p class="h3">紙本學習單</p>
+      <p class="muted">AI 提供半個圖形當鷹架，學生要親手在紙上畫出另一半（S-5-4-S04）。可以用某位學生的錯題，或隨機生成。</p>
+      <div class="row mt12">
+        <label class="field" style="flex:1 1 180px">題目來源
+          <select id="wsSource" onchange="wsSourceChange()">
+            <option value="random">隨機生成</option>
+            <option value="student">某位學生的錯題</option>
+            <option value="picked">錯題紀錄中勾選的題目</option>
+          </select></label>
+        <label class="field hidden" id="wsStudentWrap" style="flex:1 1 200px">學生<select id="wsStudent"></select></label>
+        <label class="field" style="flex:0 1 120px">難度<select id="wsDiff"><option value="low">低</option><option value="mid" selected>中</option><option value="high">高</option><option value="mix">混合</option></select></label>
+        <label class="field" style="flex:0 1 110px">題數<select id="wsCount"><option>4</option><option selected>6</option><option>8</option></select></label>
+        <label class="field" style="flex:0 1 140px">版面<select id="wsLayout"><option value="grid">方格</option><option value="dots">點陣</option></select></label>
+        <label class="field" style="flex:0 1 170px">題型<select id="wsType"><option value="half">畫出另一半</option><option value="axis">畫出對稱軸</option><option value="mix" selected>兩種混合</option></select></label>
+      </div>
+      <div class="row mt12">
+        <label class="row" style="gap:6px;font-size:14px"><input type="checkbox" id="wsAnswer" checked> 附解答頁</label>
+        <label class="field" style="flex:1 1 220px">學習單標題<input id="wsTitle" value="線對稱圖形練習單"></label>
+        <button class="btn btn-primary" onclick="wsGenerate()">產生預覽</button>
+        <button class="btn btn-navy hidden" id="wsPrintBtn" onclick="window.print()">🖨️ 列印 / 存成 PDF</button>
+      </div>
+    </div>
+    <div class="card mt16 hidden" id="wsPreviewWrap">
+      <p class="h3">預覽（<span id="wsPreviewCount">0</span> 題）</p>
+      <div class="wsgrid mt12" id="wsPreview"></div>
+    </div>
+  </div>
+
+  <!-- 照片牆 -->
+  <div id="tab-photos" class="hidden">
+    <div class="card">
+      <div class="row"><p class="h3">第一關：學生上傳的生活對稱照片</p><div class="grow"></div><button class="btn btn-ghost btn-sm" onclick="loadPhotos()">🔄 重新載入</button></div>
+      <p class="muted">系統只能檢查對稱點的幾何關係（垂直、等距），「照片本身是不是線對稱」請老師人工檢視 🟡。</p>
+    </div>
+    <div class="photo-grid mt16" id="photoWall"></div>
+  </div>
+</section>
+
+</main>
+<footer>車城國小資訊老師 @ Google Gemini 協作設計 ・ <span id="footVer"></span></footer>
+
+<!-- 列印區 -->
+<div id="printArea"></div>
+
+<!-- Modals -->
+<div id="pwdModal" class="modal hidden" onclick="if(event.target===this)closeModal('pwdModal')">
+  <div class="modal-box" style="max-width:380px">
+    <button class="modal-x" onclick="closeModal('pwdModal')">×</button>
+    <p class="h2">教師後台</p>
+    <label class="field mt12">密碼<input id="tPwd" type="password" onkeydown="if(event.key==='Enter')teacherLogin()"></label>
+    <button class="btn btn-navy mt16" style="width:100%" onclick="teacherLogin()">進入</button>
+  </div>
+</div>
+<div id="clModal" class="modal hidden" onclick="if(event.target===this)closeModal('clModal')">
+  <div class="modal-box"><button class="modal-x" onclick="closeModal('clModal')">×</button><p class="h2">更新紀錄</p><div id="clList" class="mt12"></div></div>
+</div>
+<div id="detailModal" class="modal hidden" onclick="if(event.target===this)closeModal('detailModal')">
+  <div class="modal-box wide"><button class="modal-x" onclick="closeModal('detailModal')">×</button><div id="detailBody"></div></div>
+</div>
+<div id="toast" class="hidden"></div>
+<div id="loading" class="hidden"><div class="spin"></div><span id="loadingText">處理中…</span></div>
+
+<script>
+/* ============================================================
+   設定
+   ============================================================ */
+const GAS_URL = 'YOUR_GAS_WEB_APP_URL';   // ← 部署後貼上 GAS Web App URL（…/exec）
+const APP_VERSION = 'v1.0';
+const CHANGELOG = [
+  { version: 'v1.0', date: '2026-09-21', desc: '初版：PTC 帳號登入（必須 ptc 開頭＋數字流水號）與進度保存；三關闖關（實境照片檢驗、方格宇宙、點陣星空）；教師後台三檢視（表格／清單／圖卡）、錯題紀錄、紙本學習單產生器（隨機／學生錯題／勾選錯題，附解答頁）、第一關照片牆；學生資料 API 需教師密碼。' }
+];
+const TOTAL_STAGES = 3;
+const STAGE_XP = { 1: 200, 2: 300, 3: 300 };
+const ROUNDS_PER_STAGE = 3;
+const DIFF = {
+  low:  { label: '低', N: 7, axes: ['v'],               k: 3, targets: 1, offCenter: false, maxOff: 3 },
+  mid:  { label: '中', N: 9, axes: ['v', 'h'],          k: 4, targets: 2, offCenter: true,  maxOff: 99 },
+  high: { label: '高', N: 9, axes: ['v', 'h', 'd', 'a'], k: 5, targets: 3, offCenter: true,  maxOff: 99 }
+};
+const STAGE_META = {
+  1: { title: '生活對稱檢驗', desc: '拍一張生活中的對稱物，畫出對稱軸、標記對稱點，系統自動檢查「對稱點連線是否垂直對稱軸」。', icon: '📷' },
+  2: { title: '方格宇宙挑戰', desc: '在方格圖上，先找出圖形的對稱軸，再數格子找出對稱點。可自選低／中／高難度。', icon: '🔲' },
+  3: { title: '點陣星空繪圖', desc: '沒有格線只有點點！用空間邏輯找出對稱軸與對稱點，完成終極標記。', icon: '✨' }
+};
+const LABELS = ['A', 'B', 'C', 'D', 'E'];
+const TEACHER_SESSION_KEY = 'symQuestTeacher';
+
+/* ============================================================
+   通訊：智慧路由（GET→JSONP，POST→text/plain）
+   ============================================================ */
+function callGAS_JSONP(params, callback) {
+  const cbName = 'cb_' + Date.now() + '_' + Math.floor(Math.random() * 1e6);
+  const script = document.createElement('script');
+  let done = false;
+  const timer = setTimeout(() => { if (!done) fail(); }, 20000);
+  function cleanup() { done = true; clearTimeout(timer); delete window[cbName]; if (script.parentNode) script.parentNode.removeChild(script); }
+  function fail() { cleanup(); callback(new Error('JSONP 連線失敗，請確認網路或稍後再試')); }
+  window[cbName] = function (data) { cleanup(); callback(null, data); };
+  script.onerror = fail;
+  const qs = Object.entries({ ...params, callback: cbName }).map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join('&');
+  script.src = GAS_URL + '?' + qs;
+  document.head.appendChild(script);
+}
+async function callGAS_POST(data) {
+  try {
+    const res = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(data), redirect: 'follow' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } catch (err) {
+    throw new Error('POST 連線失敗，請確認網路或稍後再試');
+  }
+}
+function showConnectionError() {
+  const b = document.getElementById('errBanner');
+  b.textContent = '⚠️ 系統暫時無法連線，請確認網路後重新整理頁面。';
+  b.classList.remove('hidden');
+}
+
+/* ============================================================
+   小工具
+   ============================================================ */
+const $ = id => document.getElementById(id);
+function escapeHtml(v) {
+  return (v === null || v === undefined ? '' : String(v)).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+function safeUrl(u) { const s = (u || '').toString().trim(); return /^https?:\/\//i.test(s) ? s : ''; }
+function rnd(n) { return Math.floor(Math.random() * n); }
+function pick(a) { return a[rnd(a.length)]; }
+function shuffle(a) { const b = a.slice(); for (let i = b.length - 1; i > 0; i--) { const j = rnd(i + 1);[b[i], b[j]] = [b[j], b[i]]; } return b; }
+function sample(a, k) { return shuffle(a).slice(0, k); }
+function showToast(msg, type) {
+  const t = $('toast'); t.textContent = msg; t.className = type || ''; t.classList.remove('hidden');
+  clearTimeout(t._tm); t._tm = setTimeout(() => t.classList.add('hidden'), 2600);
+}
+function setLoading(on, text) { $('loading').classList.toggle('hidden', !on); if (text) $('loadingText').textContent = text; }
+function openModal(id) { $(id).classList.remove('hidden'); }
+function closeModal(id) { $(id).classList.add('hidden'); }
+document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden')); });
+function showView(id) {
+  ['view-login', 'view-map', 'view-s1', 'view-grid', 'view-complete', 'view-teacher'].forEach(v => $(v).classList.toggle('hidden', v !== id));
+  window.scrollTo({ top: 0 });
+}
+function pct(ok, total) { return total ? Math.round(ok / total * 100) : 0; }
+function fmtTime(t) { return t ? String(t).replace('T', ' ').slice(0, 16) : ''; }
+
+/* 版本標示 */
+function initVersion() {
+  $('verBadge').textContent = APP_VERSION;
+  $('footVer').textContent = APP_VERSION;
+  const isLocal = location.protocol === 'file:' || /localhost|127\.0\.0\.1/.test(location.host);
+  const bar = $('envBar');
+  bar.textContent = isLocal ? `🛠️ 本機測試環境（${APP_VERSION}）` : `✅ 目前運行於 GitHub Pages 正式環境（${APP_VERSION}）`;
+  bar.classList.toggle('local', isLocal);
+  if (GAS_URL.indexOf('script.google.com') < 0) { bar.textContent = '⚠️ 尚未設定 GAS_URL，請先在 index.html 貼上 Web App 網址'; bar.classList.add('local'); }
+}
+function openChangelog() {
+  $('clList').innerHTML = CHANGELOG.map((c, i) => `<div class="cl-item"><b>${escapeHtml(c.version)}</b> ${i === 0 ? '<span class="tag tag-teal">最新</span>' : ''} <span class="muted">${escapeHtml(c.date)}</span><br>${escapeHtml(c.desc)}</div>`).join('');
+  openModal('clModal');
+}
+
+/* ============================================================
+   幾何核心（格點座標：x 向右、y 向下，0..N-1）
+   axis = { t:'v'|'h'|'d'|'a', c }  v: x=c；h: y=c；d: y=x；a: x+y=N-1
+   ============================================================ */
+function mirrorPt(p, ax, N) {
+  if (ax.t === 'v') return { x: 2 * ax.c - p.x, y: p.y };
+  if (ax.t === 'h') return { x: p.x, y: 2 * ax.c - p.y };
+  if (ax.t === 'd') return { x: p.y, y: p.x };
+  return { x: N - 1 - p.y, y: N - 1 - p.x };
+}
+function projPt(p, ax) {
+  if (ax.t === 'v') return p.y;
+  if (ax.t === 'h') return p.x;
+  if (ax.t === 'd') return p.x + p.y;
+  return p.x - p.y;
+}
+function sidePt(p, ax, N) {
+  if (ax.t === 'v') return p.x - ax.c;
+  if (ax.t === 'h') return p.y - ax.c;
+  if (ax.t === 'd') return p.x - p.y;
+  return p.x + p.y - (N - 1);
+}
+function axisEq(a, b) { return !!a && !!b && a.t === b.t && ((a.t === 'd' || a.t === 'a') || Number(a.c) === Number(b.c)); }
+function axisLatticePts(ax, N) {
+  const pts = [];
+  for (let i = 0; i < N; i++) {
+    if (ax.t === 'v') pts.push({ x: ax.c, y: i });
+    else if (ax.t === 'h') pts.push({ x: i, y: ax.c });
+    else if (ax.t === 'd') pts.push({ x: i, y: i });
+    else pts.push({ x: i, y: N - 1 - i });
+  }
+  return pts;
+}
+function axisEnds(ax, N) {
+  const m = 0.6;
+  if (ax.t === 'v') return [{ x: ax.c, y: -m }, { x: ax.c, y: N - 1 + m }];
+  if (ax.t === 'h') return [{ x: -m, y: ax.c }, { x: N - 1 + m, y: ax.c }];
+  if (ax.t === 'd') return [{ x: -m, y: -m }, { x: N - 1 + m, y: N - 1 + m }];
+  return [{ x: -m, y: N - 1 + m }, { x: N - 1 + m, y: -m }];
+}
+function axisName(ax) {
+  return { v: '直立的', h: '橫躺的', d: '從左上斜到右下的', a: '從左下斜到右上的' }[ax.t];
+}
+function ptEq(a, b) { return a && b && a.x === b.x && a.y === b.y; }
+function distToAxis(p, ax) {
+  if (ax.t === 'v' || ax.t === 'h') return Math.abs(sidePt(p, ax, 0));
+  return null; // 斜軸不用格數說明
+}
+
+function generatePuzzle(diffKey) {
+  const cfg = DIFF[diffKey], N = cfg.N, mid = (N - 1) / 2;
+  const t = pick(cfg.axes);                     // 軸的方向先決定，避免難產的方向被稀釋
+  for (let attempt = 0; attempt < 300; attempt++) {
+    let c = mid;
+    if (cfg.offCenter && (t === 'v' || t === 'h')) c = mid + pick([-1, 0, 1]);
+    const ax = { t, c };
+    const sgn = pick([-1, 1]);
+    const sidePts = [];
+    for (let x = 0; x < N; x++) for (let y = 0; y < N; y++) {
+      const p = { x, y }, s = sidePt(p, ax, N), m = mirrorPt(p, ax, N);
+      const mirrorInside = m.x >= 0 && m.x < N && m.y >= 0 && m.y < N;
+      if (Math.sign(s) === sgn && Math.abs(s) <= cfg.maxOff && mirrorInside) sidePts.push(p);
+    }
+    const aPts = axisLatticePts(ax, N).map(p => ({ p, pr: projPt(p, ax) })).sort((a, b) => a.pr - b.pr);
+    const i = rnd(aPts.length - 2);
+    const j = i + 2 + rnd(aPts.length - i - 2);
+    const e1 = aPts[i].p, e2 = aPts[j].p, p1 = aPts[i].pr, p2 = aPts[j].pr;
+    const groups = {};
+    sidePts.forEach(p => { const pr = projPt(p, ax); if (pr > p1 && pr < p2) (groups[pr] = groups[pr] || []).push(p); });
+    const prs = Object.keys(groups).map(Number);
+    if (prs.length < cfg.k) continue;
+    const chosenPr = sample(prs, cfg.k).sort((a, b) => a - b);
+    const inner = chosenPr.map(pr => pick(groups[pr]));
+    const half = [e1, ...inner, e2];
+    const full = half.concat(inner.slice().reverse().map(p => mirrorPt(p, ax, N)));
+    const targetIdx = sample(inner.map((_, k) => k), cfg.targets).sort((a, b) => a - b);
+    const targets = targetIdx.map(k => inner[k]);
+    const pool = [];
+    [mid - 1, mid, mid + 1].forEach(cc => { pool.push({ t: 'v', c: cc }); pool.push({ t: 'h', c: cc }); });
+    pool.push({ t: 'd' }, { t: 'a' });
+    const candidates = shuffle([ax, ...sample(pool.filter(a => !axisEq(a, ax)), 3)]);
+    return { N, diff: diffKey, axis: ax, half, inner, targets, full, candidates };
+  }
+  return null;
+}
+/* 從紀錄還原題目（學習單用）：只需要 N / axis / half / targets */
+function normalizePuzzle(pz) {
+  if (!pz || !pz.half || !pz.axis) return null;
+  const N = pz.N, ax = pz.axis;
+  const inner = pz.half.slice(1, -1);
+  const full = pz.half.concat(inner.slice().reverse().map(p => mirrorPt(p, ax, N)));
+  return { N, diff: pz.diff || 'mid', axis: ax, half: pz.half, inner, targets: pz.targets || [], full, candidates: [] };
+}
+function puzzleForLog(pz) { return { N: pz.N, diff: pz.diff, axis: pz.axis, half: pz.half, targets: pz.targets }; }
+
+/* ============================================================
+   SVG 繪製
+   opts: { size, dots, showFull, showHalf, showAxis, candidates, selAxis, okAxis, badAxis,
+           onAxisTap, onPointTap, marks:[{p,cls,label}], helpers:[{a,b}], reveal, print, vertexDots }
+   ============================================================ */
+function svgEl(name, attrs) {
+  const e = document.createElementNS('http://www.w3.org/2000/svg', name);
+  for (const k in attrs) if (attrs[k] !== undefined && attrs[k] !== null) e.setAttribute(k, attrs[k]);
+  return e;
+}
+function buildSVG(pz, opts) {
+  opts = opts || {};
+  const N = pz.N, size = opts.size || 380, cell = size / (N + 1);
+  const P = p => ({ X: cell * (p.x + 1), Y: cell * (p.y + 1) });
+  const pts = arr => arr.map(p => { const q = P(p); return `${q.X},${q.Y}`; }).join(' ');
+  const svg = svgEl('svg', { viewBox: `0 0 ${size} ${size}`, class: 'puz' });
+  const pr = opts.print ? 'print-' : '';
+  svg.appendChild(svgEl('rect', { x: 0, y: 0, width: size, height: size, rx: 10, class: pr + 'bg' }));
+  if (!opts.dots) {
+    for (let i = 0; i < N; i++) {
+      svg.appendChild(svgEl('line', { x1: cell, y1: cell * (i + 1), x2: cell * N, y2: cell * (i + 1), class: pr + 'gridline' }));
+      svg.appendChild(svgEl('line', { x1: cell * (i + 1), y1: cell, x2: cell * (i + 1), y2: cell * N, class: pr + 'gridline' }));
+    }
+  } else {
+    for (let x = 0; x < N; x++) for (let y = 0; y < N; y++) {
+      const q = P({ x, y });
+      svg.appendChild(svgEl('circle', { cx: q.X, cy: q.Y, r: Math.max(2, cell * 0.09), class: pr + 'dot' }));
+    }
+  }
+  if (opts.showFull) {
+    svg.appendChild(svgEl('polygon', { points: pts(pz.full), class: opts.print ? 'print-full' : (opts.reveal ? 'fig-reveal' : 'fig-full') }));
+  } else if (opts.showHalf) {
+    svg.appendChild(svgEl('polyline', { points: pts(pz.half), class: opts.print ? 'print-half' : 'fig-half' }));
+  }
+  if (opts.vertexDots) {
+    const vs = opts.showFull ? pz.full : pz.half;
+    vs.forEach(p => { const q = P(p); svg.appendChild(svgEl('circle', { cx: q.X, cy: q.Y, r: cell * 0.14, class: opts.print ? 'print-vertex' : 'mark-vertex' })); });
+  }
+  if (opts.showAxis) {
+    const [a, b] = axisEnds(pz.axis, N), qa = P(a), qb = P(b);
+    svg.appendChild(svgEl('line', { x1: qa.X, y1: qa.Y, x2: qb.X, y2: qb.Y, class: opts.print ? 'print-axis' : 'axis' }));
+  }
+  (opts.candidates || []).forEach(ax => {
+    const [a, b] = axisEnds(ax, N), qa = P(a), qb = P(b);
+    const g = svgEl('g', {});
+    const hit = svgEl('line', { x1: qa.X, y1: qa.Y, x2: qb.X, y2: qb.Y, class: 'cand-hit' });
+    let cls = 'cand';
+    if (axisEq(ax, opts.okAxis)) cls += ' ok';
+    else if (axisEq(ax, opts.badAxis)) cls += ' bad';
+    else if (axisEq(ax, opts.selAxis)) cls += ' sel';
+    const vis = svgEl('line', { x1: qa.X, y1: qa.Y, x2: qb.X, y2: qb.Y, class: cls });
+    if (opts.onAxisTap) hit.addEventListener('click', () => opts.onAxisTap(ax));
+    g.appendChild(hit); g.appendChild(vis); svg.appendChild(g);
+  });
+  (opts.helpers || []).forEach(h => {
+    const qa = P(h.a), qb = P(h.b);
+    svg.appendChild(svgEl('line', { x1: qa.X, y1: qa.Y, x2: qb.X, y2: qb.Y, class: 'helper' }));
+  });
+  if (opts.onPointTap) {
+    for (let x = 0; x < N; x++) for (let y = 0; y < N; y++) {
+      const q = P({ x, y });
+      const hit = svgEl('circle', { cx: q.X, cy: q.Y, r: cell * 0.42, class: 'pt-hit' });
+      hit.addEventListener('click', () => opts.onPointTap({ x, y }));
+      svg.appendChild(hit);
+    }
+  }
+  (opts.marks || []).forEach(m => {
+    const q = P(m.p);
+    if (m.cls === 'mark-expect') svg.appendChild(svgEl('circle', { cx: q.X, cy: q.Y, r: 11, class: m.cls }));
+    else svg.appendChild(svgEl('circle', { cx: q.X, cy: q.Y, r: 9, class: m.cls }));
+    if (m.label) {
+      const dx = m.p.x > N / 2 ? 12 : -12, anchor = m.p.x > N / 2 ? 'start' : 'end';
+      const txt = svgEl('text', { x: q.X + dx, y: q.Y - 10, class: opts.print ? 'print-lbl' : 'lbl', 'text-anchor': anchor });
+      txt.textContent = m.label;
+      svg.appendChild(txt);
+    }
+  });
+  return svg;
+}
+
+/* ============================================================
+   學生狀態
+   ============================================================ */
+let currentStudent = null;
+let maxStepReached = 1;
+
+function stageXpTotal(step) { let s = 0; for (let i = 1; i < step; i++) s += STAGE_XP[i] || 0; return s; }
+
+function cleanPtc(v) { return String(v || '').trim().toLowerCase().split('@')[0]; }
+const PTC_RE = /^ptc\d+$/;
+function ptcHint() {
+  const v = cleanPtc($('inPtc').value), t = $('ptcHintText');
+  if (!v) { t.textContent = '一定要打 ptc 開頭，後面接數字。'; t.style.color = ''; return; }
+  if (PTC_RE.test(v)) { t.textContent = '✅ 帳號格式正確：' + v; t.style.color = 'var(--teal)'; return; }
+  t.textContent = v.startsWith('ptc') ? '⚠️ ptc 後面只能接數字' : '⚠️ 記得要打 ptc 開頭喔';
+  t.style.color = 'var(--coral)';
+}
+function doLogin() {
+  const ptc = cleanPtc($('inPtc').value), name = $('inName').value.trim();
+  if (!PTC_RE.test(ptc)) { showToast('PTC 帳號要以 ptc 開頭、後面接數字', 'err'); $('inPtc').focus(); return; }
+  $('btnLogin').disabled = true; setLoading(true, '特務報到中…');
+  callGAS_JSONP({ action: 'login', ptc, name }, (err, res) => {
+    setLoading(false); $('btnLogin').disabled = false;
+    if (err) { showConnectionError(); return; }
+    if (!res.success) { showToast(res.message || '登入失敗', 'err'); if (res.needName) $('inName').focus(); return; }
+    currentStudent = res.data;
+    maxStepReached = currentStudent.step || 1;
+    try { localStorage.setItem('symQuestLast', JSON.stringify({ ptc })); } catch (e) { /* ignore */ }
+    $('chipName').textContent = `${currentStudent.name}（${currentStudent.studentKey}）`;
+    $('studentChip').classList.remove('hidden');
+    showToast(res.isNew ? `歡迎新特務 ${currentStudent.name}！` : `歡迎回來，${currentStudent.name}！`, 'ok');
+    showMap();
+  });
+}
+function logout() {
+  currentStudent = null; sessionStorage.removeItem(TEACHER_SESSION_KEY);
+  $('studentChip').classList.add('hidden'); $('teacherChip').classList.add('hidden');
+  showView('view-login');
+}
+function refreshXp() {
+  $('chipXp').textContent = currentStudent.xp || 0;
+  $('mapXp').textContent = currentStudent.xp || 0;
+  $('mapBar').style.width = Math.min(100, (currentStudent.xp || 0) / 800 * 100) + '%';
+}
+function showMap() {
+  if (!currentStudent) { showView('view-login'); return; }
+  refreshXp();
+  const step = currentStudent.step || 1;
+  const cards = [];
+  for (let n = 1; n <= TOTAL_STAGES; n++) {
+    const m = STAGE_META[n];
+    const done = step > n, cur = step === n, locked = step < n;
+    let st = done ? '<span class="tag tag-teal">✅ 完成</span>' : cur ? '<span class="tag tag-amber">▶ 進行中</span>' : '<span class="tag tag-gray">🔒 未解鎖</span>';
+    let extra = '';
+    if (n === 1 && currentStudent.stage1) extra = `<span class="muted">上次：${currentStudent.stage1.pass ? '通過' : '未通過'}・${currentStudent.stage1.pairs || 0} 組對稱點</span>`;
+    if (n === 2 && currentStudent.stage2) extra = `<span class="muted">${statsText(currentStudent.stage2)}</span>`;
+    if (n === 3 && currentStudent.stage3) extra = `<span class="muted">${statsText(currentStudent.stage3)}</span>`;
+    cards.push(`<div class="stage ${cur ? 'current' : ''} ${locked ? 'locked' : ''}">
+      <div class="st">${st}</div>
+      <div class="no">第${['一', '二', '三'][n - 1]}關 ・ +${STAGE_XP[n]} XP</div>
+      <h3>${m.icon} ${m.title}</h3>
+      <p>${m.desc}</p>${extra}
+      <button class="btn ${cur ? 'btn-primary' : 'btn-ghost'}" ${locked ? 'disabled' : ''} onclick="enterStage(${n})">${done ? '再練習一次' : cur ? '開始挑戰' : '尚未解鎖'}</button>
+    </div>`);
+  }
+  $('stageCards').innerHTML = cards.join('');
+  $('mapHint').textContent = step > TOTAL_STAGES ? '🏆 你已經是「幾何黃金比例」特務了！可以回到任何一關再練習。' : '完成三關任務，就能解鎖「幾何黃金比例」徽章與 800 XP！';
+  showView('view-map');
+}
+function statsText(s) {
+  if (!s) return '';
+  return ['low', 'mid', 'high'].filter(k => s[k] && s[k].total).map(k => `${DIFF[k].label}難度 答對 ${s[k].ok}/${s[k].total} 次`).join('・') || '尚未作答';
+}
+function enterStage(n) {
+  if (n === 1) s1Enter(); else gEnter(n);
+}
+/* 儲存進度（step / xp 由前端算好，後端只取 max） */
+function saveProgress(extra) {
+  if (!currentStudent) return Promise.resolve();
+  const payload = Object.assign({ action: 'saveProgress', studentKey: currentStudent.studentKey, step: currentStudent.step, xp: currentStudent.xp, completed: currentStudent.step > TOTAL_STAGES }, extra || {});
+  return callGAS_POST(payload).catch(() => showToast('進度暫時無法儲存，請稍後再試', 'err'));
+}
+function completeStage(n) {
+  const nextStep = n + 1;
+  if (nextStep > maxStepReached) {
+    currentStudent.xp = Math.max(currentStudent.xp || 0, stageXpTotal(nextStep));
+    maxStepReached = nextStep;
+  }
+  currentStudent.step = Math.max(currentStudent.step || 1, nextStep);
+  refreshXp();
+}
+function logAttempt(o) {
+  if (!currentStudent) return Promise.resolve();
+  return callGAS_POST(Object.assign({
+    action: 'logAttempt', studentKey: currentStudent.studentKey, name: currentStudent.name
+  }, o)).catch(() => { /* 紀錄失敗不影響闖關 */ });
+}
+
+/* ============================================================
+   第一關：實境照片
+   ============================================================ */
+const s1 = { img: null, w: 0, h: 0, axis: [], pairs: [], pending: null, results: null, uploaded: null };
+const S1_COLORS = ['#f2b632', '#17a589', '#e35d5b', '#3b82c4', '#7b61c9', '#e07b39'];
+
+function s1Enter() {
+  s1Reset();
+  $('s1upload').classList.remove('hidden'); $('s1board').classList.add('hidden');
+  $('s1next').classList.add('hidden');
+  showView('view-s1');
+  s1RenderSide();
+}
+function s1Reset() { s1.img = null; s1.axis = []; s1.pairs = []; s1.pending = null; s1.results = null; s1.uploaded = null; $('s1feedback').innerHTML = ''; }
+function s1LoadFile(input) {
+  const f = input.files && input.files[0]; if (!f) return;
+  const url = URL.createObjectURL(f);
+  const img = new Image();
+  img.onload = () => {
+    URL.revokeObjectURL(url);
+    const MAX = 720, r = Math.min(1, MAX / Math.max(img.width, img.height));
+    s1Reset();
+    s1.w = Math.round(img.width * r); s1.h = Math.round(img.height * r);
+    const c = $('s1canvas'); c.width = s1.w; c.height = s1.h;
+    s1.img = img;
+    $('s1upload').classList.add('hidden'); $('s1board').classList.remove('hidden');
+    s1Draw(); s1RenderSide();
+  };
+  img.onerror = () => showToast('照片讀取失敗，請換一張', 'err');
+  img.src = url; input.value = '';
+}
+$('s1canvas').addEventListener('pointerdown', e => {
+  if (!s1.img || s1.results) return;
+  const c = $('s1canvas'), r = c.getBoundingClientRect();
+  const p = { x: (e.clientX - r.left) * c.width / r.width, y: (e.clientY - r.top) * c.height / r.height };
+  if (s1.axis.length < 2) { s1.axis.push(p); }
+  else if (!s1.pending) { s1.pending = p; }
+  else { s1.pairs.push([s1.pending, p]); s1.pending = null; }
+  s1Draw(); s1RenderSide();
+});
+function s1Undo() {
+  if (s1.results) { s1.results = null; }
+  else if (s1.pending) s1.pending = null;
+  else if (s1.pairs.length) s1.pairs.pop();
+  else if (s1.axis.length) s1.axis.pop();
+  s1Draw(); s1RenderSide();
+}
+function s1RemovePair(i) { s1.pairs.splice(i, 1); s1.results = null; $('s1feedback').innerHTML = ''; s1Draw(); s1RenderSide(); }
+function s1Clear() { s1.axis = []; s1.pairs = []; s1.pending = null; s1.results = null; $('s1feedback').innerHTML = ''; s1Draw(); s1RenderSide(); }
+function s1Draw() {
+  const c = $('s1canvas'), ctx = c.getContext('2d');
+  if (!s1.img) return;
+  ctx.clearRect(0, 0, c.width, c.height);
+  ctx.drawImage(s1.img, 0, 0, c.width, c.height);
+  const sc = Math.max(c.width, c.height) / 500;
+  ctx.lineCap = 'round';
+  if (s1.axis.length) {
+    ctx.fillStyle = '#3b82c4';
+    s1.axis.forEach(p => { ctx.beginPath(); ctx.arc(p.x, p.y, 6 * sc, 0, Math.PI * 2); ctx.fill(); });
+    if (s1.axis.length === 2) {
+      const [a, b] = s1.axis, dx = b.x - a.x, dy = b.y - a.y, L = Math.hypot(dx, dy) || 1, ux = dx / L, uy = dy / L, ext = 2000;
+      ctx.strokeStyle = '#3b82c4'; ctx.lineWidth = 4 * sc; ctx.setLineDash([12 * sc, 8 * sc]);
+      ctx.beginPath(); ctx.moveTo(a.x - ux * ext, a.y - uy * ext); ctx.lineTo(b.x + ux * ext, b.y + uy * ext); ctx.stroke(); ctx.setLineDash([]);
+    }
+  }
+  s1.pairs.forEach((pr, i) => {
+    const col = S1_COLORS[i % S1_COLORS.length];
+    const res = s1.results && s1.results[i];
+    ctx.strokeStyle = res ? (res.ok ? '#17a589' : '#e35d5b') : col; ctx.lineWidth = 3 * sc; ctx.setLineDash([6 * sc, 5 * sc]);
+    ctx.beginPath(); ctx.moveTo(pr[0].x, pr[0].y); ctx.lineTo(pr[1].x, pr[1].y); ctx.stroke(); ctx.setLineDash([]);
+    pr.forEach((p, k) => {
+      ctx.fillStyle = col; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2 * sc;
+      ctx.beginPath(); ctx.arc(p.x, p.y, 8 * sc, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#fff'; ctx.font = `bold ${13 * sc}px Noto Sans TC, sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(LABELS[i] + (k ? '′' : ''), p.x, p.y);
+    });
+    if (res) {
+      const m = { x: (pr[0].x + pr[1].x) / 2, y: (pr[0].y + pr[1].y) / 2 };
+      ctx.fillStyle = res.ok ? '#17a589' : '#e35d5b'; ctx.font = `bold ${16 * sc}px sans-serif`;
+      ctx.fillText(res.ok ? '✓' : '✗', m.x, m.y - 14 * sc);
+    }
+  });
+  if (s1.pending) {
+    const col = S1_COLORS[s1.pairs.length % S1_COLORS.length];
+    ctx.fillStyle = col; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2 * sc;
+    ctx.beginPath(); ctx.arc(s1.pending.x, s1.pending.y, 8 * sc, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  }
+}
+function s1RenderSide() {
+  const hasAxis = s1.axis.length === 2, n = s1.pairs.length;
+  $('s1step1').className = 'step ' + (hasAxis ? 'done' : 'on');
+  $('s1step2').className = 'step ' + (!hasAxis ? '' : n >= 3 ? 'done' : 'on');
+  $('s1step3').className = 'step ' + (hasAxis && n >= 3 ? 'on' : '');
+  $('s1pairs').innerHTML = s1.pairs.map((pr, i) => {
+    const res = s1.results && s1.results[i];
+    const col = S1_COLORS[i % S1_COLORS.length];
+    const txt = res ? `${res.perp ? '✅ 垂直' : '❌ 沒有垂直'}　${res.equi ? '✅ 等距' : '❌ 不等距'}` : '已標記';
+    return `<div class="pair"><span class="sw" style="background:${col}"></span><b>${LABELS[i]} ↔ ${LABELS[i]}′</b><span class="grow"></span><span>${txt}</span><button class="btn btn-ghost btn-sm" style="min-height:30px;padding:0 8px" onclick="s1RemovePair(${i})" title="移除這組">✕</button></div>`;
+  }).join('') + (s1.pending ? `<div class="pair"><span class="sw" style="background:${S1_COLORS[n % S1_COLORS.length]}"></span>${LABELS[n]} 已點，請點另一邊對應的位置…</div>` : '');
+  $('s1check').disabled = !(s1.img && hasAxis && n >= 3 && !s1.pending) || !!s1.results;
+}
+function s1Evaluate() {
+  const [a, b] = s1.axis, dx = b.x - a.x, dy = b.y - a.y, L = Math.hypot(dx, dy) || 1, ux = dx / L, uy = dy / L;
+  const tol = 0.045 * Math.min(s1.w, s1.h);
+  return s1.pairs.map(([p, q]) => {
+    const mx = (p.x + q.x) / 2, my = (p.y + q.y) / 2;
+    const distMid = Math.abs((mx - a.x) * uy - (my - a.y) * ux);   // 中點到對稱軸距離
+    const sx = q.x - p.x, sy = q.y - p.y, SL = Math.hypot(sx, sy) || 1;
+    const cosT = Math.abs((sx / SL) * ux + (sy / SL) * uy);        // 與軸夾角餘弦，0 = 垂直
+    const perp = cosT < 0.17 && SL > tol;                            // 約 10° 內視為垂直
+    const equi = distMid < tol;
+    return { perp, equi, ok: perp && equi };
+  });
+}
+async function s1Check() {
+  if (!(s1.img && s1.axis.length === 2 && s1.pairs.length >= 3)) return;
+  s1.results = s1Evaluate();
+  const pass = s1.results.every(r => r.ok);
+  s1Draw(); s1RenderSide();
+  const fb = $('s1feedback');
+  if (pass) {
+    fb.innerHTML = `<div class="notice notice-ok">🎉 太厲害了！${s1.pairs.length} 組對稱點的連線都和對稱軸<b>垂直</b>，而且到對稱軸的距離<b>一樣遠</b>。這就是線對稱圖形的密碼！</div>`;
+  } else {
+    const bad = s1.results.map((r, i) => r.ok ? null : LABELS[i]).filter(Boolean).join('、');
+    fb.innerHTML = `<div class="notice notice-bad">❌ ${bad} 這幾組還不對喔。想一想：把照片沿著藍線對摺，兩個點會不會疊在一起？對稱點的連線一定會<b>垂直</b>對稱軸，而且兩點到對稱軸<b>一樣遠</b>。<br>按右邊的 ✕ 把錯的那組拿掉，重新點一次再送出。</div>`;
+  }
+  setLoading(true, '上傳照片與紀錄中…');
+  const c = $('s1canvas');
+  const dataUrl = c.toDataURL('image/jpeg', 0.72);
+  let imageUrl = '', thumb = '';
+  try {
+    const up = await callGAS_POST({ action: 'uploadPhoto', studentKey: currentStudent.studentKey, name: currentStudent.name, imageBase64: dataUrl });
+    if (up && up.success) { imageUrl = up.url; thumb = up.thumb; }
+  } catch (e) { showToast('照片上傳失敗，但檢查結果已保留', 'err'); }
+  const norm = p => ({ x: +(p.x / s1.w).toFixed(4), y: +(p.y / s1.h).toFixed(4) });
+  await logAttempt({ stage: 1, difficulty: '', type: 'photo', puzzle: { w: s1.w, h: s1.h }, answer: { axis: s1.axis.map(norm), pairs: s1.pairs.map(pr => pr.map(norm)), results: s1.results }, correct: pass, imageUrl });
+  if (pass) {
+    completeStage(1);
+    currentStudent.stage1 = { pass: true, pairs: s1.pairs.length, imageUrl, thumb, time: new Date().toISOString() };
+    await saveProgress({ stage1: currentStudent.stage1 });
+    $('s1next').classList.remove('hidden');
+    showToast('+200 XP！第二關已解鎖', 'ok');
+  } else {
+    currentStudent.stage1 = Object.assign({}, currentStudent.stage1 || {}, { pass: !!(currentStudent.stage1 && currentStudent.stage1.pass), lastTry: 'fail', imageUrl, thumb });
+    await saveProgress({ stage1: currentStudent.stage1 });
+  }
+  setLoading(false);
+}
+
+/* ============================================================
+   第二關 / 第三關：方格 / 點陣
+   ============================================================ */
+const gs = { stage: 2, diff: 'low', round: 0, phase: 'axis', pz: null, tIdx: 0, ok: 0, total: 0, answered: false, lastAxis: null, pointMarks: [], stats: null };
+
+function gEnter(stage) {
+  gs.stage = stage;
+  $('gStageTag').textContent = stage === 2 ? '第二關' : '第三關';
+  $('gStageTitle').textContent = STAGE_META[stage].title;
+  gShowDiff();
+  showView('view-grid');
+}
+function gShowDiff() {
+  $('gDiffPanel').classList.remove('hidden'); $('gPlay').classList.add('hidden'); $('gResult').classList.add('hidden');
+}
+function gChooseDiff(d) {
+  gs.diff = d; gs.round = 0; gs.ok = 0; gs.total = 0;
+  gs.stats = currentStudent['stage' + gs.stage] || { low: { ok: 0, total: 0 }, mid: { ok: 0, total: 0 }, high: { ok: 0, total: 0 }, rounds: 0 };
+  ['low', 'mid', 'high'].forEach(k => { if (!gs.stats[k]) gs.stats[k] = { ok: 0, total: 0 }; });
+  $('gDiffPanel').classList.add('hidden'); $('gPlay').classList.remove('hidden'); $('gResult').classList.add('hidden');
+  $('gFeedback').innerHTML = ''; gs.helpers = [];
+  gNextRound();
+}
+function gNextRound() {
+  if (gs.round >= ROUNDS_PER_STAGE) { gFinish(); return; }
+  gs.round++; gs.pz = generatePuzzle(gs.diff); gs.phase = 'axis'; gs.tIdx = 0; gs.answered = false; gs.lastAxis = null; gs.pointMarks = [];
+  if (!gs.pz) { showToast('題目生成失敗，再試一次', 'err'); gs.round--; return; }
+  gRender();
+}
+function gRecord(correct) { gs.total++; if (correct) gs.ok++; const s = gs.stats[gs.diff]; s.total++; if (correct) s.ok++; }
+function gRender() {
+  const pz = gs.pz, dots = gs.stage === 3;
+  $('gRoundTag').textContent = `難度 ${DIFF[gs.diff].label} ・ 第 ${gs.round} / ${ROUNDS_PER_STAGE} 題`;
+  $('gScoreTag').textContent = `本次答對 ${gs.ok} / ${gs.total}`;
+  const board = $('gBoard'); board.innerHTML = '';
+  const nextBtn = $('gNextBtn'); nextBtn.classList.toggle('hidden', !gs.answered);
+  let svg;
+  if (gs.phase === 'axis') {
+    $('gPrompt').textContent = '這個圖形的對稱軸是哪一條？點選你覺得對的那條虛線。';
+    svg = buildSVG(pz, {
+      dots, showFull: true, vertexDots: true, candidates: pz.candidates,
+      selAxis: null, okAxis: gs.answered ? pz.axis : null, badAxis: gs.answered && !axisEq(gs.lastAxis, pz.axis) ? gs.lastAxis : null,
+      onAxisTap: gs.answered ? null : gAnswerAxis
+    });
+  } else if (gs.phase === 'point') {
+    const lbl = LABELS[gs.tIdx];
+    $('gPrompt').textContent = `${lbl} 的對稱點 ${lbl}′ 在哪裡？點一下那個位置。`;
+    const marks = pz.targets.map((p, i) => ({ p, cls: 'mark-target' + (i === gs.tIdx && !gs.answered ? ' active' : ''), label: LABELS[i] }));
+    svg = buildSVG(pz, {
+      dots, showHalf: true, showAxis: true, vertexDots: true,
+      marks: marks.concat(gs.pointMarks), helpers: gs.helpers || [],
+      onPointTap: gs.answered ? null : gAnswerPoint
+    });
+  } else {
+    $('gPrompt').textContent = '🎉 完整的線對稱圖形出現了！沿著對稱軸對摺，兩邊會完全重疊。';
+    svg = buildSVG(pz, { dots, showFull: true, showAxis: true, reveal: true, vertexDots: true, marks: gs.pointMarks.filter(m => m.cls === 'mark-ok') });
+  }
+  board.appendChild(svg);
+}
+function gAnswerAxis(ax) {
+  if (gs.answered) return;
+  gs.answered = true; gs.lastAxis = ax;
+  const correct = axisEq(ax, gs.pz.axis);
+  gRecord(correct);
+  $('gFeedback').innerHTML = correct
+    ? `<div class="notice notice-ok">✅ 答對了！沿著這條${axisName(ax)}對稱軸對摺，兩邊會完全重疊。</div>`
+    : `<div class="notice notice-bad">❌ 沿著你選的線對摺，兩邊不會疊在一起喔。正確的對稱軸是<b>綠色</b>那條（${axisName(gs.pz.axis)}）。找對稱軸的秘訣：想像把圖形對摺，摺線兩邊要一模一樣。</div>`;
+  logAttempt({ stage: gs.stage, difficulty: gs.diff, type: 'axis', puzzle: puzzleForLog(gs.pz), answer: { axis: ax }, correct });
+  gRender();
+}
+function gAnswerPoint(p) {
+  if (gs.answered) return;
+  const pz = gs.pz, target = pz.targets[gs.tIdx], expect = mirrorPt(target, pz.axis, pz.N);
+  const correct = ptEq(p, expect);
+  gs.answered = true;
+  gRecord(correct);
+  const lbl = LABELS[gs.tIdx];
+  gs.helpers = [{ a: target, b: expect }];
+  if (correct) {
+    gs.pointMarks.push({ p, cls: 'mark-ok', label: lbl + '′' });
+    $('gFeedback').innerHTML = `<div class="notice notice-ok">✅ 答對了！${lbl} 和 ${lbl}′ 的連線垂直對稱軸，而且到對稱軸一樣遠。</div>`;
+  } else {
+    gs.pointMarks.push({ p, cls: 'mark-bad' });
+    gs.pointMarks.push({ p: expect, cls: 'mark-expect', label: lbl + '′' });
+    const d = distToAxis(target, pz.axis);
+    const why = d !== null
+      ? `${lbl} 離對稱軸 <b>${d} 格</b>，所以 ${lbl}′ 要在對稱軸<b>另一邊</b>、也離 ${d} 格的地方，而且要和 ${lbl} 在同一條垂直線上。`
+      : `想像沿著斜的對稱軸對摺，${lbl} 會落在哪裡？${lbl} 和 ${lbl}′ 到對稱軸的距離要一樣，連線要垂直對稱軸。`;
+    $('gFeedback').innerHTML = `<div class="notice notice-bad">❌ 不對喔。正確位置是<b>綠色圈圈</b>。${why}</div>`;
+  }
+  logAttempt({ stage: gs.stage, difficulty: gs.diff, type: 'point', puzzle: puzzleForLog(gs.pz), answer: { target, chosen: p, expected: expect }, correct });
+  gRender();
+}
+function gNext() {
+  if (!gs.answered) return;
+  $('gFeedback').innerHTML = ''; gs.helpers = [];
+  if (gs.phase === 'axis') { gs.phase = 'point'; gs.tIdx = 0; gs.answered = false; gs.pointMarks = []; }
+  else if (gs.phase === 'point') {
+    gs.tIdx++;
+    if (gs.tIdx < gs.pz.targets.length) { gs.answered = false; gs.pointMarks = gs.pointMarks.filter(m => m.cls === 'mark-ok'); }
+    else { gs.phase = 'reveal'; gs.answered = true; gs.pointMarks = gs.pointMarks.filter(m => m.cls === 'mark-ok'); gs.stats.rounds = (gs.stats.rounds || 0) + 1; currentStudent['stage' + gs.stage] = gs.stats; saveProgress({ ['stage' + gs.stage]: gs.stats }); }
+  }
+  else { gNextRound(); return; }
+  gRender();
+}
+function gFinish() {
+  completeStage(gs.stage);
+  currentStudent['stage' + gs.stage] = gs.stats;
+  saveProgress({ ['stage' + gs.stage]: gs.stats });
+  $('gPlay').classList.add('hidden'); $('gResult').classList.remove('hidden');
+  const acc = pct(gs.ok, gs.total);
+  $('gResultStats').innerHTML = `
+    <div class="stat stat-teal"><b>${gs.ok}/${gs.total}</b><span>本次答對</span></div>
+    <div class="stat stat-sky"><b>${acc}%</b><span>正確率</span></div>
+    <div class="stat stat-amber"><b>${currentStudent.xp}</b><span>目前 XP</span></div>
+    <div class="stat stat-gray"><b>${DIFF[gs.diff].label}</b><span>難度</span></div>`;
+  $('gResultMsg').innerHTML = acc >= 80
+    ? `<div class="notice notice-ok">🌟 表現超棒！你已經掌握「對稱點到對稱軸等距、連線垂直」的密碼了。${gs.diff !== 'high' ? '要不要挑戰更高難度？' : ''}</div>`
+    : `<div class="notice notice-info">💪 再多練幾題會更熟。記得：先找對稱軸，再數格子，對稱點在另一邊「一樣遠」的地方。老師也能幫你印專屬練習單喔。</div>`;
+  if (currentStudent.step > TOTAL_STAGES) {
+    setTimeout(() => {
+      $('cName').textContent = currentStudent.name;
+      $('cSummary').innerHTML = `第二關：${statsText(currentStudent.stage2)}<br>第三關：${statsText(currentStudent.stage3)}`;
+      showView('view-complete');
+    }, 1800);
+  }
+}
+
+/* ============================================================
+   教師後台
+   ============================================================ */
+const ANSWER_FIELDS = [
+  { key: 'stage1Text', label: '第一關 實境檢驗', icon: '📷' },
+  { key: 'stage2Text', label: '第二關 方格宇宙', icon: '🔲' },
+  { key: 'stage3Text', label: '第三關 點陣星空', icon: '✨' }
+];
+let allStudents = [], allWrong = [], teacherViewMode = 'table', pickedPuzzles = {};
+
+/* 教師專用 API：自動帶上密碼，驗證失效時退回登入 */
+function callTeacher(params, callback) {
+  callGAS_JSONP(Object.assign({ tpw: sessionStorage.getItem(TEACHER_SESSION_KEY) || '' }, params), (err, res) => {
+    if (!err && res && res.authError) { setLoading(false); sessionStorage.removeItem(TEACHER_SESSION_KEY); showToast(res.message, 'err'); logout(); openTeacherLogin(); return; }
+    callback(err, res);
+  });
+}
+function openTeacherLogin() { $('tPwd').value = ''; openModal('pwdModal'); setTimeout(() => $('tPwd').focus(), 50); }
+function teacherLogin() {
+  const pw = $('tPwd').value.trim(); if (!pw) return;
+  setLoading(true, '驗證中…');
+  callGAS_JSONP({ action: 'verifyTeacherPassword', password: pw }, (err, res) => {
+    setLoading(false);
+    if (err) { showConnectionError(); return; }
+    if (!res.success) { showToast(res.message || '密碼錯誤', 'err'); return; }
+    sessionStorage.setItem(TEACHER_SESSION_KEY, pw); closeModal('pwdModal'); enterTeacher();
+  });
+}
+function enterTeacher() {
+  $('teacherChip').classList.remove('hidden'); $('studentChip').classList.add('hidden');
+  showView('view-teacher'); tTab('overview'); loadStudents();
+}
+function tTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.tab === name));
+  ['overview', 'wrong', 'ws', 'photos'].forEach(n => $('tab-' + n).classList.toggle('hidden', n !== name));
+  if (name === 'wrong' && !allWrong.length) loadWrong();
+  if (name === 'photos') loadPhotos();
+  if (name === 'ws') wsFillStudents();
+}
+function stage1Text(s) {
+  if (!s || !s.stage1) return '尚未挑戰';
+  const r = s.stage1; return `${r.pass ? '✅ 通過' : '❌ 尚未通過'}・標記 ${r.pairs || 0} 組對稱點${r.imageUrl ? '・已上傳照片' : ''}`;
+}
+function stageNText(st) {
+  if (!st || !st.rounds) return '尚未作答';
+  return ['low', 'mid', 'high'].filter(k => st[k] && st[k].total).map(k => `${DIFF[k].label}：答對 ${st[k].ok}/${st[k].total} 次（${pct(st[k].ok, st[k].total)}%）`).join('　') + `・完成 ${st.rounds} 個圖形`;
+}
+function decorate(s) {
+  s.stage1Text = stage1Text(s); s.stage2Text = stageNText(s.stage2); s.stage3Text = stageNText(s.stage3);
+  s.stepShown = Math.min(s.step || 1, TOTAL_STAGES + 1);
+  return s;
+}
+function loadStudents() {
+  setLoading(true, '載入學生資料…');
+  callTeacher({ action: 'getStudents' }, (err, res) => {
+    setLoading(false);
+    if (err) { showConnectionError(); return; }
+    allStudents = (res.data || []).map(decorate).sort((a, b) => (b.xp || 0) - (a.xp || 0));
+    buildDateFilter();
+    const f = $('tFocus'); const cur = f.value; f.innerHTML = '<option value="">全部</option>' + ANSWER_FIELDS.map(x => `<option value="${x.key}">${x.icon} ${x.label}</option>`).join(''); f.value = cur;
+    renderStudents();
+  });
+}
+function buildDateFilter() {
+  const sel = $('tDateFilter'), cur = sel.value;
+  const dates = [...new Set(allStudents.map(s => String(s.lastLogin || '').slice(0, 10)).filter(Boolean))].sort().reverse();
+  sel.innerHTML = '<option value="">全部</option>' + dates.map(d => `<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`).join('');
+  if (dates.includes(cur)) sel.value = cur;
+}
+function matchKw(o, kw) { return !kw || String(o.studentKey || '').toLowerCase().includes(kw) || String(o.name || '').toLowerCase().includes(kw); }
+function whoText(o) { return `${o.name || '（未填姓名）'}（${o.studentKey}）`; }
+function tView(v) { teacherViewMode = v; document.querySelectorAll('.seg button').forEach(b => b.classList.toggle('on', b.dataset.v === v)); $('tFocusWrap').classList.toggle('hidden', v !== 'card'); renderStudents(); }
+function stepBadge(s) {
+  if ((s.step || 1) > TOTAL_STAGES) return '<span class="tag tag-teal">🏆 完賽</span>';
+  return `<span class="tag tag-amber">第 ${s.stepShown} 關</span>`;
+}
+function renderStudents() {
+  const kw = $('tSearch').value.trim().toLowerCase(), day = $('tDateFilter').value;
+  const list = allStudents.filter(s => matchKw(s, kw) && (!day || String(s.lastLogin || '').startsWith(day)));
+  const done = list.filter(s => (s.step || 1) > TOTAL_STAGES).length;
+  const avg = list.length ? Math.round(list.reduce((a, s) => a + (s.xp || 0), 0) / list.length) : 0;
+  $('tStats').innerHTML = `
+    <div class="stat stat-sky"><b>${list.length}</b><span>學生人數</span></div>
+    <div class="stat stat-teal"><b>${done}</b><span>已完賽</span></div>
+    <div class="stat stat-amber"><b>${list.length - done}</b><span>進行中</span></div>
+    <div class="stat stat-gray"><b>${avg}</b><span>平均 XP</span></div>`;
+  const wrap = $('tStudentsWrap');
+  if (!list.length) { wrap.innerHTML = '<p class="muted">還沒有學生登入。學生用 PTC 帳號登入後就會出現在這裡（或調整上方的搜尋／日期篩選）。</p>'; return; }
+  if (teacherViewMode === 'table') {
+    wrap.innerHTML = `<div class="tblwrap"><table class="tbl"><thead><tr><th>PTC 帳號</th><th>姓名</th><th>進度</th><th>XP</th><th>第一關</th><th>第二關</th><th>第三關</th><th>最近登入</th><th></th></tr></thead><tbody>` +
+      list.map(s => `<tr><td>${escapeHtml(s.studentKey)}</td><td><b>${escapeHtml(s.name)}</b></td><td>${stepBadge(s)}</td><td>${s.xp || 0}</td><td>${escapeHtml(s.stage1Text)}</td><td>${escapeHtml(s.stage2Text)}</td><td>${escapeHtml(s.stage3Text)}</td><td class="muted">${escapeHtml(fmtTime(s.lastLogin))}</td><td><button class="btn btn-ghost btn-sm" onclick="openDetail('${escapeHtml(s.studentKey)}')">詳情</button></td></tr>`).join('') + '</tbody></table></div>';
+  } else if (teacherViewMode === 'list') {
+    wrap.innerHTML = list.map(s => `<div class="list-item">
+      <div><div class="who">${escapeHtml(s.name)}</div><div class="muted">${escapeHtml(s.studentKey)}</div><div class="mt8">${stepBadge(s)} <span class="tag tag-amber">⭐ ${s.xp || 0}</span></div>
+        <div class="progress mt8"><i style="width:${Math.min(100, (s.xp || 0) / 800 * 100)}%"></i></div>
+        <button class="btn btn-ghost btn-sm mt8" onclick="openDetail('${escapeHtml(s.studentKey)}')">作答詳情</button></div>
+      <div style="display:grid;gap:6px">${ANSWER_FIELDS.map(f => `<div class="kv"><b>${f.icon} ${f.label}</b>${escapeHtml(s[f.key])}</div>`).join('')}</div>
+    </div>`).join('');
+  } else {
+    const focus = $('tFocus').value;
+    const fields = focus ? ANSWER_FIELDS.filter(f => f.key === focus) : ANSWER_FIELDS;
+    wrap.innerHTML = `<div class="cards">` + list.map(s => `<div class="scard"><div class="row"><span class="who">${escapeHtml(s.name)}</span><span class="muted">${escapeHtml(s.studentKey)}</span><span class="grow"></span>${stepBadge(s)}</div>
+      ${fields.map(f => `<div class="kv"><b>${f.icon} ${f.label}</b><div class="${focus ? '' : 'clamp'}">${escapeHtml(s[f.key])}</div></div>`).join('')}
+      ${focus === 'stage1Text' && s.stage1 && safeUrl(s.stage1.thumb) ? `<img src="${safeUrl(s.stage1.thumb)}" alt="" style="border-radius:8px">` : ''}
+      <button class="btn btn-ghost btn-sm" onclick="openDetail('${escapeHtml(s.studentKey)}')">詳情</button></div>`).join('') + '</div>';
+  }
+}
+function openDetail(key) {
+  const s = allStudents.find(x => x.studentKey === key); if (!s) return;
+  $('detailBody').innerHTML = `<p class="h2">${escapeHtml(whoText(s))}</p><div class="row mt8">${stepBadge(s)}<span class="tag tag-amber">⭐ ${s.xp || 0} XP</span><span class="muted">最近登入 ${escapeHtml(fmtTime(s.lastLogin))}</span></div>
+    <div class="mt12" style="display:grid;gap:6px">${ANSWER_FIELDS.map(f => `<div class="kv"><b>${f.icon} ${f.label}</b>${escapeHtml(s[f.key])}</div>`).join('')}</div>
+    ${s.stage1 && safeUrl(s.stage1.thumb) ? `<a href="${safeUrl(s.stage1.imageUrl)}" target="_blank" rel="noopener"><img src="${safeUrl(s.stage1.thumb)}" alt="" class="mt12" style="max-height:260px;border-radius:10px"></a>` : ''}
+    <p class="h3 mt16">作答紀錄（最近 40 筆）</p><div id="detailAttempts" class="mt8 muted">載入中…</div>`;
+  openModal('detailModal');
+  callTeacher({ action: 'getAttempts', studentKey: key, limit: 40 }, (err, res) => {
+    const box = $('detailAttempts'); if (!box) return;
+    if (err || !res.success) { box.textContent = '載入失敗'; return; }
+    const rows = res.data || [];
+    if (!rows.length) { box.textContent = '尚無作答紀錄'; return; }
+    box.innerHTML = ''; box.className = 'mt8 pairs';
+    rows.forEach(a => box.appendChild(attemptRow(a, false)));
+  });
+}
+function typeName(t) { return { axis: '找對稱軸', point: '找對稱點', photo: '實境照片' }[t] || t; }
+function attemptRow(a, withPick) {
+  const div = document.createElement('div'); div.className = 'pair'; div.style.alignItems = 'flex-start';
+  const mini = document.createElement('div'); mini.className = 'mini';
+  const pz = a.type !== 'photo' ? normalizePuzzle(a.puzzle) : null;
+  if (pz) {
+    const marks = [];
+    if (a.type === 'point' && a.answer) { if (a.answer.target) marks.push({ p: a.answer.target, cls: 'mark-target' }); if (a.answer.chosen) marks.push({ p: a.answer.chosen, cls: a.correct ? 'mark-ok' : 'mark-bad' }); if (!a.correct && a.answer.expected) marks.push({ p: a.answer.expected, cls: 'mark-expect' }); }
+    mini.appendChild(buildSVG(pz, { size: 200, dots: a.stage === 3, showHalf: a.type === 'point', showFull: a.type === 'axis', showAxis: true, marks, candidates: a.type === 'axis' && a.answer && a.answer.axis && !a.correct ? [a.answer.axis] : [], badAxis: a.type === 'axis' && !a.correct && a.answer ? a.answer.axis : null }));
+  } else if (safeUrl(a.imageUrl)) {
+    const id = (a.imageUrl.match(/\/d\/([^/]+)/) || [])[1];
+    mini.innerHTML = id ? `<a href="${safeUrl(a.imageUrl)}" target="_blank" rel="noopener"><img src="https://drive.google.com/thumbnail?id=${escapeHtml(id)}&sz=w200" alt="" style="width:90px;height:90px;object-fit:cover;border-radius:8px"></a>` : '';
+  }
+  const info = document.createElement('div'); info.className = 'grow';
+  const extra = a.type === 'point' && a.answer && a.answer.chosen ? `　點選 (${a.answer.chosen.x},${a.answer.chosen.y})，正確 (${a.answer.expected.x},${a.answer.expected.y})` : '';
+  info.innerHTML = `<span class="tag ${a.correct ? 'tag-teal' : 'tag-coral'}">${a.correct ? '✅ 正確' : '❌ 錯誤'}</span> <b>第${a.stage}關</b> ${a.difficulty ? '難度' + (DIFF[a.difficulty] ? DIFF[a.difficulty].label : a.difficulty) : ''} ${typeName(a.type)}${escapeHtml(extra)}<br><span class="muted">${escapeHtml(fmtTime(a.time))}${withPick ? '　' + escapeHtml(whoText(a)) : ''}</span>`;
+  div.appendChild(mini); div.appendChild(info);
+  if (withPick && pz) {
+    const k = JSON.stringify(a.puzzle);
+    const lab = document.createElement('label'); lab.style.fontSize = '13px'; lab.innerHTML = `<input type="checkbox" ${pickedPuzzles[k] ? 'checked' : ''}> 加入學習單`;
+    lab.querySelector('input').addEventListener('change', e => { if (e.target.checked) pickedPuzzles[k] = { puzzle: a.puzzle, stage: a.stage, type: a.type }; else delete pickedPuzzles[k]; $('wPicked').textContent = Object.keys(pickedPuzzles).length; });
+    div.appendChild(lab);
+  }
+  return div;
+}
+function loadWrong() {
+  setLoading(true, '載入錯題…');
+  callTeacher({ action: 'getAttempts', onlyWrong: 1, limit: 400 }, (err, res) => {
+    setLoading(false);
+    if (err) { showConnectionError(); return; }
+    allWrong = res.data || [];
+    renderWrong();
+  });
+}
+function renderWrong() {
+  const st = $('wStage').value, kw = $('wSearch').value.trim().toLowerCase();
+  const rows = allWrong.filter(a => (!st || String(a.stage) === st) && matchKw(a, kw));
+  const box = $('wList'); box.innerHTML = '';
+  if (!rows.length) { box.innerHTML = '<p class="muted">沒有符合的錯題紀錄。</p>'; return; }
+  box.className = 'card mt16 pairs';
+  rows.forEach(a => box.appendChild(attemptRow(a, true)));
+}
+function loadPhotos() {
+  callTeacher({ action: 'getAttempts', stage: 1, limit: 200 }, (err, res) => {
+    if (err) { showConnectionError(); return; }
+    const rows = (res.data || []).filter(a => safeUrl(a.imageUrl));
+    const wall = $('photoWall');
+    if (!rows.length) { wall.innerHTML = '<p class="muted">還沒有學生上傳照片。</p>'; return; }
+    wall.innerHTML = rows.map(a => {
+      const id = (a.imageUrl.match(/\/d\/([^/]+)/) || [])[1];
+      return `<a class="photo" href="${safeUrl(a.imageUrl)}" target="_blank" rel="noopener"><img src="https://drive.google.com/thumbnail?id=${escapeHtml(id)}&sz=w400" alt="" loading="lazy"><div><b>${escapeHtml(a.name)}</b> <span class="muted">${escapeHtml(a.studentKey)}</span><br><span class="tag ${a.correct ? 'tag-teal' : 'tag-coral'}">${a.correct ? '幾何檢查通過' : '幾何檢查未通過'}</span> <span class="muted">${escapeHtml(fmtTime(a.time))}</span></div></a>`;
+    }).join('');
+  });
+}
+
+/* ---------- 學習單產生器 ---------- */
+function wsFillStudents() {
+  const sel = $('wsStudent'), cur = sel.value;
+  sel.innerHTML = allStudents.map(s => `<option value="${escapeHtml(s.studentKey)}">${escapeHtml(whoText(s))}</option>`).join('');
+  if (cur) sel.value = cur;
+}
+function wsSourceChange() { $('wsStudentWrap').classList.toggle('hidden', $('wsSource').value !== 'student'); }
+function wsGenerate() {
+  const source = $('wsSource').value, count = Number($('wsCount').value), diff = $('wsDiff').value, type = $('wsType').value;
+  if (source === 'random') { wsRender(wsRandomItems(count, diff, type)); return; }
+  if (source === 'picked') {
+    const items = Object.values(pickedPuzzles).map(o => ({ pz: normalizePuzzle(o.puzzle), type: o.type === 'axis' ? 'axis' : 'half', fromStage: o.stage })).filter(i => i.pz);
+    if (!items.length) { showToast('請先到「錯題紀錄」勾選題目', 'err'); return; }
+    wsRender(wsTopUp(items, count, diff, type)); return;
+  }
+  const key = $('wsStudent').value; if (!key) { showToast('請先選擇學生', 'err'); return; }
+  setLoading(true, '載入學生錯題…');
+  callTeacher({ action: 'getAttempts', studentKey: key, onlyWrong: 1, limit: 100 }, (err, res) => {
+    setLoading(false);
+    if (err) { showConnectionError(); return; }
+    const seen = {}; const items = [];
+    (res.data || []).forEach(a => {
+      if (a.type === 'photo') return;
+      const pz = normalizePuzzle(a.puzzle); if (!pz) return;
+      const k = JSON.stringify(a.puzzle); if (seen[k]) return; seen[k] = 1;
+      items.push({ pz, type: a.type === 'axis' ? 'axis' : 'half', fromStage: a.stage });
+    });
+    if (!items.length) showToast('這位學生沒有錯題，已改用隨機題目', '');
+    wsRender(wsTopUp(items, count, diff, type));
+  });
+}
+function wsRandomItems(n, diff, type) {
+  const items = [];
+  for (let i = 0; i < n; i++) {
+    const d = diff === 'mix' ? ['low', 'mid', 'high'][i % 3] : diff;
+    const t = type === 'mix' ? (i % 2 ? 'axis' : 'half') : type;
+    items.push({ pz: generatePuzzle(d), type: t });
+  }
+  return items;
+}
+function wsTopUp(items, n, diff, type) {
+  const out = items.slice(0, n);
+  if (out.length < n) out.push(...wsRandomItems(n - out.length, diff, type));
+  return out;
+}
+function wsQuestionText(it) {
+  return it.type === 'axis' ? '這個圖形是線對稱圖形，請畫出它的對稱軸。' : '虛線是對稱軸，請畫出圖形的另一半，完成線對稱圖形。';
+}
+function wsPage(items, startIdx, title, dots, ans) {
+  const pg = document.createElement('div'); pg.className = 'ws-page';
+  pg.innerHTML = `<div class="ws-head"><h2>${escapeHtml(title)}${ans ? '（解答）' : ''}</h2><span>PTC 帳號：______________　姓名：__________</span></div>`;
+  const grid = document.createElement('div'); grid.className = 'ws-grid';
+  items.forEach((it, k) => {
+    const q = document.createElement('div'); q.className = 'ws-q';
+    q.innerHTML = `<div class="q">${startIdx + k + 1}. ${wsQuestionText(it)}</div>`;
+    q.appendChild(wsSvg(it, dots, ans)); grid.appendChild(q);
+  });
+  pg.appendChild(grid); return pg;
+}
+function wsRender(items) {
+  const dots = $('wsLayout').value === 'dots', title = $('wsTitle').value || '線對稱圖形練習單', withAns = $('wsAnswer').checked;
+  const prev = $('wsPreview'); prev.innerHTML = '';
+  items.forEach((it, i) => {
+    const q = document.createElement('div'); q.className = 'wsq';
+    q.innerHTML = `<div class="q">${i + 1}. ${it.type === 'axis' ? '畫出對稱軸' : '畫出另一半'}</div>`;
+    q.appendChild(wsSvg(it, dots, false)); prev.appendChild(q);
+  });
+  $('wsPreviewCount').textContent = items.length;
+  $('wsPreviewWrap').classList.remove('hidden'); $('wsPrintBtn').classList.remove('hidden');
+
+  const pa = $('printArea'); pa.innerHTML = '';
+  const PER_PAGE = 6;
+  for (let i = 0; i < items.length; i += PER_PAGE) pa.appendChild(wsPage(items.slice(i, i + PER_PAGE), i, title, dots, false));
+  if (withAns) for (let i = 0; i < items.length; i += PER_PAGE) pa.appendChild(wsPage(items.slice(i, i + PER_PAGE), i, title, dots, true));
+}
+function wsSvg(it, dots, ans) {
+  if (it.type === 'axis') return buildSVG(it.pz, { size: 300, dots, showFull: true, showAxis: ans, vertexDots: true, print: true });
+  return buildSVG(it.pz, { size: 300, dots, showHalf: !ans, showFull: ans, showAxis: true, vertexDots: true, print: true });
+}
+
+/* ============================================================
+   啟動
+   ============================================================ */
+(function init() {
+  initVersion();
+  try { const last = JSON.parse(localStorage.getItem('symQuestLast') || 'null'); if (last && last.ptc) { $('inPtc').value = last.ptc; ptcHint(); } } catch (e) { /* ignore */ }
+  if (sessionStorage.getItem(TEACHER_SESSION_KEY)) enterTeacher();
+  callGAS_JSONP({ action: 'ping' }, (err, res) => {
+    if (err) { showConnectionError(); return; }
+    if (res && res.appTitle) document.title = '車城國小｜' + res.appTitle;
+  });
+})();
+</script>
+</body>
+</html>
