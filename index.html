@@ -426,6 +426,7 @@ svg.puz{width:100%;height:auto;user-select:none;-webkit-user-select:none}
     <button class="tab" data-tab="wrong" onclick="tTab('wrong')">❌ 錯題紀錄</button>
     <button class="tab" data-tab="ws" onclick="tTab('ws')">🖨️ 學習單產生器</button>
     <button class="tab" data-tab="photos" onclick="tTab('photos')">📷 照片牆</button>
+    <button class="tab" data-tab="settings" onclick="tTab('settings')">⚙️ 關卡設定</button>
   </div>
 
   <!-- 學生總覽 -->
@@ -502,6 +503,29 @@ svg.puz{width:100%;height:auto;user-select:none;-webkit-user-select:none}
     <div class="card mt16" id="folderStatus"><span class="muted">檢查照片資料夾中…</span></div>
     <div class="photo-grid mt16" id="photoWall"></div>
   </div>
+
+  <!-- 關卡設定 -->
+  <div id="tab-settings" class="hidden">
+    <div class="card">
+      <p class="h3">第一關：對折判定標準</p>
+      <p class="muted mt8">改完按「儲存設定」即生效，設定存在試算表的「系統參數」工作表，也可以直接在試算表修改。</p>
+      <div class="row mt16">
+        <label class="field" style="flex:0 1 200px">重疊程度通過門檻（%）<input id="setPass" type="number" min="10" max="95" step="5"></label>
+        <label class="field" style="flex:0 1 220px">失敗幾次後先放行<input id="setTries" type="number" min="1" max="10" step="1"></label>
+      </div>
+      <label class="row mt16" style="gap:8px;font-size:15px;font-weight:700"><input type="checkbox" id="setEdge"> 檢查圖形輪廓是否對稱（建議開啟）</label>
+      <p class="muted mt8">開啟後，系統除了比對整體畫面，還會比對圖形的<b>輪廓</b>。背景看起來對稱、但圖形沒有對齊時會判定失敗，成績取兩者較低的分數。畫面太單純（例如整片純色）時自動不採計輪廓。</p>
+      <div class="row mt16">
+        <button class="btn btn-primary" onclick="saveSettings()">💾 儲存設定</button>
+        <button class="btn btn-ghost btn-sm" onclick="loadSettings(true)">↺ 重新載入</button>
+        <span class="muted" id="setMsg"></span>
+      </div>
+    </div>
+    <div class="card mt16">
+      <p class="h3">目前生效的數值</p>
+      <div class="stats mt12" id="setNow"></div>
+    </div>
+  </div>
 </section>
 
 </main>
@@ -536,8 +560,9 @@ svg.puz{width:100%;height:auto;user-select:none;-webkit-user-select:none}
    設定
    ============================================================ */
 const GAS_URL = 'https://script.google.com/macros/s/AKfycby8du8l-6NHXdkDWg35NXLjtMaiC8Gyn7IooF-7enm9t4Bs8zWqyZOiFJlvm1EsQLInYQ/exec';
-const APP_VERSION = 'v1.4';
+const APP_VERSION = 'v1.5';
 const CHANGELOG = [
+  { version: 'v1.5', date: '2026-09-23', desc: '教師後台新增「關卡設定」分頁：可調整第一關重疊程度通過門檻、失敗幾次後放行、是否檢查輪廓（存於系統參數工作表）。第一關新增輪廓對稱偵測：除了整體畫面，另以邊緣圖比對對折後圖形輪廓是否吻合，背景對稱但圖形沒對齊時判定失敗，成績取兩者較低分；畫面太單純時自動不採計輪廓。' },
   { version: 'v1.4', date: '2026-09-22', desc: '教師後台作答紀錄與錯題紀錄的縮圖可點擊放大，放大圖附圖例說明；照片紀錄可放大並開啟雲端硬碟原圖；第三、四關的對稱點紀錄會顯示學生放的所有點；Esc 只關閉最上層視窗。' },
   { version: 'v1.3', date: '2026-09-22', desc: '第二關對稱點改以「對折後兩點是否疊在一起」判定：容許誤差以螢幕約 16px 計算、兩點須在對稱軸兩側且不可太靠近對稱軸，對折後畫出容許範圍圈與紅色差距線；垂直標準收緊為 85°～90° 並顯示實際夾角。第三、四關改為先點出所有對稱點，再由學生自己選兩點連線畫出另一半，送出後對折檢查對稱點與連線，漏連（綠色虛線）與多連（紅色）分別標示。' },
   { version: 'v1.2', date: '2026-09-22', desc: '關卡改為四關：第一關照片只畫對稱軸，送出後自動對折並計算左右重疊程度；第二關延續第一關照片標 2 組對稱點，判斷連線是否垂直對稱軸並自動對折看點是否重疊；第三關（原第二關）方格圖改為依序點出所有對稱點，自動連出對稱點連線與另一半，送出後自動對折；第四關為點陣版本。照片關卡改為大圖置中、檢查區在下方。' },
@@ -892,7 +917,8 @@ function stageSummary(n, r) {
   if (!r) return '';
   if (n === 1) {
     if (r.score === undefined || r.score === null) return r.pass ? '✅ 通過' : '';
-    return `${r.pass ? '✅ 通過' : r.needsReview ? '🟡 待老師確認' : '❌ 未通過'}・重疊程度 ${r.score}%・嘗試 ${r.tries || 1} 次`;
+    const d = (r.scoreAll === undefined || r.scoreAll === null) ? '' : `（整體 ${r.scoreAll}%${r.scoreEdge === null || r.scoreEdge === undefined ? '' : '・輪廓 ' + r.scoreEdge + '%'}）`;
+    return `${r.pass ? '✅ 通過' : r.needsReview ? '🟡 待老師確認' : '❌ 未通過'}・重疊程度 ${r.score}%${d}・嘗試 ${r.tries || 1} 次`;
   }
   if (n === 2) {
     if (!r.pairs) return r.pass ? '✅ 通過' : '';
@@ -936,9 +962,9 @@ function logAttempt(o) {
    第二關：延續第一關的照片與對稱軸，標 2 組對稱點 → 判斷垂直、等距 → 自動對折看點是否重疊
    ============================================================ */
 const PHOTO_MAX = 1000;          // 畫布內部解析度上限（長邊 px）
-const S1_PASS = 50;              // 第一關通過門檻：重疊程度 %
 const S1_MIN_COVER = 0.3;        // 對折後至少要比對到 30% 的畫面，避免對稱軸貼著邊
-const S1_MAX_TRIES = 3;          // 失敗 3 次後可先進下一關，標記「待老師確認」
+// 第一關判定參數：預設值，登入時由後端「系統參數」覆寫（教師後台可改）
+const SETTINGS = { s1Pass: 50, s1EdgeCheck: true, s1MaxTries: 3 };
 const S2_PAIRS = 2;              // 第二關要標的對稱點組數
 const S2_TOL_CSS = 16;           // 第二關對折重疊容許誤差：螢幕上約 16px（一個指尖），不受照片解析度影響
 const S2_PERP_DEG = 5;           // 連線和對稱軸夾角 85°～90° 才算垂直
@@ -982,7 +1008,8 @@ function pLoadFile(input) {
     const r = Math.min(1, PHOTO_MAX / Math.max(img.width, img.height));
     photo.img = img; photo.w = Math.round(img.width * r); photo.h = Math.round(img.height * r);
     photo.axis = []; photo.axisLocked = false; photo.pairs = []; photo.pending = null;
-    photo.results = null; photo.checked = false; photo.fold = 0;
+    photo.results = null; photo.checked = false; photo.fold = 0; photo.passed = false;
+    if (photo.stage === 1) photo.tries1 = 0; else photo.tries2 = 0;   // 換新照片＝重新開始計算嘗試次數
     $('pResult').innerHTML = '';
     pSetupCanvas(); pDraw(); pRenderSide();
   };
@@ -1160,7 +1187,7 @@ function pRenderSide() {
   if (photo.stage === 1) {
     steps.push([cls(hasImg, !hasImg), '上傳照片', '拍一張或從相簿選一張線對稱的照片。']);
     steps.push([cls(hasAxis, hasImg && !hasAxis), '畫出對稱軸', '在照片上點兩下，兩點會連成一條藍色的對稱軸。畫歪了再點一下就能重畫。']);
-    steps.push([cls(photo.passed, hasAxis), '送出檢查', '系統會沿著你畫的對稱軸自動對折，看左右兩邊有沒有重疊。']);
+    steps.push([cls(photo.passed, hasAxis), '送出檢查', '系統會沿著你畫的對稱軸自動對折，比對左右兩邊的畫面和圖形輪廓有沒有重疊。']);
   } else {
     if (!photo.axisLocked) steps.push([cls(hasAxis, !hasAxis), '上傳照片並畫出對稱軸', '用第一關那張照片，在照片上點兩下畫出對稱軸。']);
     steps.push([cls(n >= S2_PAIRS, hasAxis && n < S2_PAIRS), `標記 ${S2_PAIRS} 組對稱點`, '先點一邊的某個位置（例如左眼），再點另一邊「對折後會疊在一起」的位置（右眼）。']);
@@ -1182,7 +1209,23 @@ function pRenderSide() {
   $('pUndoBtn').disabled = $('pClearBtn').disabled = photo.animating || photo.passed;
 }
 
-/* ---------- 第一關：左右重疊程度（對折後的相關係數） ---------- */
+/* ---------- 第一關：左右重疊程度 ----------
+   兩個指標一起看（v1.5）：
+   - 整體重疊：灰階影像對折後的相關係數（顏色、明暗）
+   - 輪廓重疊：Sobel 邊緣圖對折後的相關係數（圖形的形狀、邊界）
+   背景對稱但圖形沒對齊時，整體分數可能很高、輪廓分數卻很低，所以取兩者的較低值當成績。 */
+function pNCC(A, B, idx) {
+  let n = 0, sa = 0, sb = 0, saa = 0, sbb = 0, sab = 0, mad = 0;
+  for (let k = 0; k < idx.length; k += 2) {
+    const a = A[idx[k]], b = B[idx[k + 1]];
+    n++; sa += a; sb += b; saa += a * a; sbb += b * b; sab += a * b; mad += Math.abs(a - b);
+  }
+  if (!n) return null;
+  const ma = sa / n, mb = sb / n;
+  const va = saa / n - ma * ma, vb = sbb / n - mb * mb, cov = sab / n - ma * mb;
+  if (va < 12 || vb < 12) return { flat: true, score: Math.max(0, 100 - (mad / n) * 2) };   // 幾乎沒有變化（純色）時改用平均差
+  return { flat: false, score: Math.max(0, cov / Math.sqrt(va * vb)) * 100 };
+}
 function pSymmetryScore() {
   const g0 = pAxisGeom(), S = 160 / Math.max(photo.w, photo.h);
   const W = Math.max(8, Math.round(photo.w * S)), H = Math.max(8, Math.round(photo.h * S));
@@ -1191,28 +1234,37 @@ function pSymmetryScore() {
   try { c.filter = 'blur(1px)'; } catch (e) { /* 舊瀏覽器略過 */ }
   c.drawImage(photo.img, 0, 0, W, H);
   let data;
-  try { data = c.getImageData(0, 0, W, H).data; } catch (e) { return { score: 0, cover: 0 }; }
+  try { data = c.getImageData(0, 0, W, H).data; } catch (e) { return { score: 0, cover: 0, scoreAll: 0, scoreEdge: 0 }; }
   const G = new Float32Array(W * H);
   for (let i = 0; i < W * H; i++) G[i] = 0.299 * data[i * 4] + 0.587 * data[i * 4 + 1] + 0.114 * data[i * 4 + 2];
+  // Sobel 邊緣圖：代表「圖形的輪廓」
+  const E = new Float32Array(W * H);
+  for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++) {
+    const i = y * W + x;
+    const gx = -G[i - W - 1] - 2 * G[i - 1] - G[i + W - 1] + G[i - W + 1] + 2 * G[i + 1] + G[i + W + 1];
+    const gy = -G[i - W - 1] - 2 * G[i - W] - G[i - W + 1] + G[i + W - 1] + 2 * G[i + W] + G[i + W + 1];
+    E[i] = Math.min(255, Math.hypot(gx, gy) / 4);
+  }
   const A = { x: g0.A.x * S, y: g0.A.y * S }, n = g0.n;
-  let cnt = 0, sa = 0, sb = 0, saa = 0, sbb = 0, sab = 0, mad = 0;
+  const idx = [];
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
     const px = x + 0.5, py = y + 0.5;
     const d = (px - A.x) * n.x + (py - A.y) * n.y;
     if (d <= 0.5) continue;
     const ix = Math.floor(px - 2 * d * n.x), iy = Math.floor(py - 2 * d * n.y);
     if (ix < 0 || iy < 0 || ix >= W || iy >= H) continue;
-    const a = G[y * W + x], b = G[iy * W + ix];
-    cnt++; sa += a; sb += b; saa += a * a; sbb += b * b; sab += a * b; mad += Math.abs(a - b);
+    idx.push(y * W + x, iy * W + ix);
   }
-  const cover = 2 * cnt / (W * H);
-  if (cnt < 40) return { score: 0, cover };
-  const ma = sa / cnt, mb = sb / cnt;
-  const va = saa / cnt - ma * ma, vb = sbb / cnt - mb * mb, cov = sab / cnt - ma * mb;
-  let score;
-  if (va < 30 || vb < 30) score = Math.max(0, 100 - (mad / cnt) * 2);     // 幾乎是純色時改用平均差
-  else score = Math.max(0, cov / Math.sqrt(va * vb)) * 100;
-  return { score: Math.round(score), cover };
+  const cover = idx.length / (W * H);         // idx 每組 2 個索引，等於 2 × 比對到的像素數 / 總像素
+  if (idx.length < 80) return { score: 0, cover, scoreAll: 0, scoreEdge: 0, edgeFlat: true };
+  const all = pNCC(G, G, idx), edge = pNCC(E, E, idx);
+  const scoreAll = Math.round(all.score);
+  const scoreEdge = edge.flat ? null : Math.round(edge.score);      // 輪廓太少（純色畫面）時不採計
+  const useEdge = SETTINGS.s1EdgeCheck && scoreEdge !== null;
+  return {
+    score: useEdge ? Math.min(scoreAll, scoreEdge) : scoreAll,
+    scoreAll, scoreEdge, cover, edgeFlat: scoreEdge === null, useEdge
+  };
 }
 
 /* ---------- 第二關：對稱點判斷 ----------
@@ -1268,28 +1320,33 @@ async function pCheckStage1() {
   photo.tries1++;
   const r = pSymmetryScore();
   const coverOk = r.cover >= S1_MIN_COVER;
-  const pass = coverOk && r.score >= S1_PASS;
-  const needsReview = !pass && photo.tries1 >= S1_MAX_TRIES;
+  const edgeFail = r.useEdge && r.scoreEdge < SETTINGS.s1Pass;      // 圖形輪廓對折後沒有吻合
+  const pass = coverOk && r.scoreAll >= SETTINGS.s1Pass && !edgeFail;
+  const needsReview = !pass && photo.tries1 >= SETTINGS.s1MaxTries;
   $('pResult').innerHTML = '<div class="notice notice-info">📐 沿著對稱軸對折中…</div>';
   pAnimateFold(async () => {
-    const level = r.score >= 70 ? 'good' : r.score >= S1_PASS ? 'mid' : 'low';
+    const level = pass ? (r.score >= 70 ? 'good' : 'mid') : 'low';
     let msg;
     if (!coverOk) msg = '🤔 對稱軸太靠近照片邊邊了，折過去的部分太少，看不出左右有沒有重疊。試著把對稱軸畫在圖形的正中間。';
+    else if (edgeFail && r.scoreAll >= SETTINGS.s1Pass) msg = `🤔 背景看起來差不多（整體 ${r.scoreAll}%），但對折後<b>圖形的輪廓沒有疊在一起</b>（輪廓只有 ${r.scoreEdge}%）。仔細看折過去的那一半，邊緣有沒有對齊？可能是對稱軸畫歪了，或這個東西本來就不是線對稱。`;
     else if (level === 'good') msg = '🎉 左右兩邊幾乎完全重疊！你畫的就是這張照片的對稱軸。';
     else if (level === 'mid') msg = '👍 左右大致重疊，這是線對稱圖形。有些小地方沒對齊，可能是拍照角度或光線造成的。';
     else msg = '🤔 對折後重疊得不多。想一想：對稱軸有沒有剛好在圖形正中間？方向是直的還是橫的？也可以換一張拍得比較正面的照片。';
     const tail = pass ? '' : needsReview
-      ? '<br>你已經試了 3 次，系統先讓你前往下一關，老師會再幫你確認這張照片。'
+      ? '<br>你已經試了 ${photo.tries1} 次，系統先讓你前往下一關，老師會再幫你確認這張照片。'
       : `<br>直接在照片上重新點兩下畫新的對稱軸，再送出一次（第 ${photo.tries1} 次）。`;
+    const detail = r.edgeFlat
+      ? `整體 ${r.scoreAll}%（畫面太單純，這次沒有採計輪廓）`
+      : `整體 ${r.scoreAll}%　輪廓 ${r.scoreEdge}%${r.useEdge ? '' : '（輪廓檢查已關閉）'}`;
     $('pResult').innerHTML = `
       <div class="row" style="align-items:flex-end"><div><div class="muted">左右重疊程度</div><div class="score-num">${r.score}%</div></div>
-        <div class="grow"><div class="meter"><i class="meter-${level}" style="width:${r.score}%"></i></div><div class="muted mt8" style="font-size:12px">${S1_PASS}% 以上就通過</div></div></div>
+        <div class="grow"><div class="meter"><i class="meter-${level}" style="width:${r.score}%"></i></div><div class="muted mt8" style="font-size:12px">${SETTINGS.s1Pass}% 以上就通過　・　${detail}</div></div></div>
       <div class="notice ${pass ? 'notice-ok' : needsReview ? 'notice-warn' : 'notice-bad'} mt12">${msg}${tail}</div>`;
     setLoading(true, '上傳照片與紀錄中…');
     const up = await pUploadMarked();
-    await logAttempt({ stage: 1, type: 'photoAxis', puzzle: { w: photo.w, h: photo.h }, answer: { axis: photo.axis.map(pNorm), score: r.score, cover: +r.cover.toFixed(2) }, correct: pass, imageUrl: up.imageUrl });
+    await logAttempt({ stage: 1, type: 'photoAxis', puzzle: { w: photo.w, h: photo.h }, answer: { axis: photo.axis.map(pNorm), score: r.score, scoreAll: r.scoreAll, scoreEdge: r.scoreEdge, cover: +r.cover.toFixed(2) }, correct: pass, imageUrl: up.imageUrl });
     const prev = currentStudent.stage1 || {};
-    const result = { pass: pass || !!prev.pass, score: r.score, tries: photo.tries1, needsReview: needsReview && !pass, imageUrl: up.imageUrl, thumb: up.thumb, time: new Date().toISOString() };
+    const result = { pass: pass || !!prev.pass, score: r.score, scoreAll: r.scoreAll, scoreEdge: r.scoreEdge, tries: photo.tries1, needsReview: needsReview && !pass, imageUrl: up.imageUrl, thumb: up.thumb, time: new Date().toISOString() };
     currentStudent.stage1 = result;
     if (pass || needsReview) {
       photo.passed = true; photo.axisLocked = true;
@@ -1648,10 +1705,11 @@ function enterTeacher() {
 }
 function tTab(name) {
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.tab === name));
-  ['overview', 'wrong', 'ws', 'photos'].forEach(n => $('tab-' + n).classList.toggle('hidden', n !== name));
+  ['overview', 'wrong', 'ws', 'photos', 'settings'].forEach(n => $('tab-' + n).classList.toggle('hidden', n !== name));
   if (name === 'wrong' && !allWrong.length) loadWrong();
   if (name === 'photos') loadPhotos();
   if (name === 'ws') wsFillStudents();
+  if (name === 'settings') loadSettings();
 }
 function stageNText(st) {
   if (!st || !st.rounds) return '尚未作答';
@@ -1759,7 +1817,7 @@ function attemptExtra(a) {
   let extra = '';
   if (a.type === 'point' && a.answer && a.answer.chosen) extra = `點選 (${a.answer.chosen.x},${a.answer.chosen.y})，正確 (${a.answer.expected.x},${a.answer.expected.y})`;
   else if (a.type === 'point' && a.answer && a.answer.expected) extra = `正確位置 (${a.answer.expected.x},${a.answer.expected.y})`;
-  if (a.type === 'photoAxis' && a.answer) extra = `重疊程度 ${a.answer.score}%`;
+  if (a.type === 'photoAxis' && a.answer) extra = `重疊程度 ${a.answer.score}%` + (a.answer.scoreEdge === undefined || a.answer.scoreEdge === null ? '' : `（整體 ${a.answer.scoreAll}%・輪廓 ${a.answer.scoreEdge}%）`);
   if (a.type === 'edges' && a.answer) extra = `連對 ${a.answer.ok}/${a.answer.total} 條${a.answer.wrong ? `、多連 ${a.answer.wrong} 條` : ''}`;
   if (a.type === 'photoPoints' && a.answer && a.answer.results) extra = a.answer.results.map((r, i) => `${LABELS[i]}：${r.ok ? '✓' : '✗'}（夾角 ${r.angle}°）`).join('、');
   return extra;
@@ -1869,6 +1927,45 @@ function loadPhotos() {
   });
 }
 
+/* ---------- 關卡設定 ---------- */
+function applySettings(s) {
+  if (!s) return;
+  if (s.s1Pass) SETTINGS.s1Pass = s.s1Pass;
+  if (s.s1MaxTries) SETTINGS.s1MaxTries = s.s1MaxTries;
+  if (typeof s.s1EdgeCheck === 'boolean') SETTINGS.s1EdgeCheck = s.s1EdgeCheck;
+}
+function renderSettings() {
+  $('setPass').value = SETTINGS.s1Pass;
+  $('setTries').value = SETTINGS.s1MaxTries;
+  $('setEdge').checked = SETTINGS.s1EdgeCheck;
+  $('setNow').innerHTML = `
+    <div class="stat stat-teal"><b>${SETTINGS.s1Pass}%</b><span>通過門檻</span></div>
+    <div class="stat stat-sky"><b>${SETTINGS.s1EdgeCheck ? '開啟' : '關閉'}</b><span>輪廓檢查</span></div>
+    <div class="stat stat-amber"><b>${SETTINGS.s1MaxTries} 次</b><span>失敗後放行</span></div>`;
+}
+function loadSettings(notify) {
+  callGAS_JSONP({ action: 'ping' }, (err, res) => {
+    if (err) { showConnectionError(); return; }
+    applySettings(res && res.settings);
+    renderSettings();
+    if (notify) showToast('已重新載入設定', 'ok');
+  });
+}
+async function saveSettings() {
+  const s1Pass = Number($('setPass').value), s1MaxTries = Number($('setTries').value);
+  if (!(s1Pass >= 10 && s1Pass <= 95)) { showToast('通過門檻請填 10～95', 'err'); return; }
+  if (!(s1MaxTries >= 1 && s1MaxTries <= 10)) { showToast('重試次數請填 1～10', 'err'); return; }
+  setLoading(true, '儲存設定中…');
+  try {
+    const res = await callGAS_POST({ action: 'saveSettings', tpw: sessionStorage.getItem(TEACHER_SESSION_KEY) || '', s1Pass, s1MaxTries, s1EdgeCheck: $('setEdge').checked });
+    setLoading(false);
+    if (!res.success) { showToast(res.message || '儲存失敗', 'err'); return; }
+    applySettings(res.settings); renderSettings();
+    $('setMsg').textContent = '已儲存 ' + fmtTime(new Date().toISOString());
+    showToast('設定已儲存，學生端下次載入就會套用', 'ok');
+  } catch (e) { setLoading(false); showToast('儲存失敗，請確認網路', 'err'); }
+}
+
 /* ---------- 學習單產生器 ---------- */
 function wsFillStudents() {
   const sel = $('wsStudent'), cur = sel.value;
@@ -1959,6 +2056,7 @@ function wsSvg(it, dots, ans) {
   callGAS_JSONP({ action: 'ping' }, (err, res) => {
     if (err) { showConnectionError(); return; }
     if (res && res.appTitle) document.title = '車城國小｜' + res.appTitle;
+    applySettings(res && res.settings);
     if (res && res.version && res.version !== APP_VERSION) {
       const bar = $('envBar'); bar.classList.add('local');
       bar.textContent = `⚠️ 前端 ${APP_VERSION} 與後端 ${res.version} 版本不一致，請確認 GAS 已用「新版本」重新部署`;
